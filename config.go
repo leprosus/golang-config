@@ -12,19 +12,19 @@ import (
 type config struct {
 	filePath      string
 	json          string
-	refreshPeriod int
-	lastRefresh   int
+	refreshPeriod int64
+	lastRefresh   int64
 }
 
 var cfg config = config{}
 
 // Init config: set file path to config file and period config refresh
-func Init(filePath string, refreshPeriod int) {
+func Init(filePath string, refreshPeriod int64) {
 	if len(cfg.filePath) == 0 {
 		cfg = config{
 			filePath: filePath,
 			refreshPeriod: refreshPeriod,
-			lastRefresh: time.Now(),
+			lastRefresh: time.Now().Unix(),
 		}
 
 		cfg.loadJson()
@@ -32,7 +32,7 @@ func Init(filePath string, refreshPeriod int) {
 }
 
 func (config *config) loadJson() string {
-	timeDiff := time.Now() - config.lastRefresh
+	timeDiff := time.Now().Unix() - config.lastRefresh
 
 	if len(config.json) == 0 || timeDiff > config.refreshPeriod {
 		fileName, _ := filepath.Abs(config.filePath)
