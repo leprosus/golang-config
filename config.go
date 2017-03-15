@@ -5,31 +5,60 @@ import (
 	"io/ioutil"
 	"github.com/tidwall/gjson"
 	"os"
+	"time"
+	"fmt"
 )
 
 type config struct {
-	FilePath string
-	json     string
+	filePath      string
+	json          string
+	refreshPeriod int
+	lastRefresh   int
 }
 
 var cfg config = config{}
 
-func Init(filePath string) {
-	if len(cfg.FilePath) == 0 {
+func Init(filePath string, refreshPeriod int) {
+	if len(cfg.filePath) == 0 {
 		cfg = config{
-			FilePath: filePath,
+			filePath: filePath,
+			refreshPeriod: refreshPeriod,
+			lastRefresh: time.Now(),
 		}
 
 		cfg.loadJson()
 	}
 }
 
+func (config *config) loadJson() string {
+	timeDiff := time.Now() - config.lastRefresh
+
+	if len(config.json) == 0 || timeDiff > config.refreshPeriod {
+		fileName, _ := filepath.Abs(config.filePath)
+
+		json, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			fmt.Printf("Can't load config file by %s\n", fileName)
+
+			os.Exit(1)
+		}
+
+		config.json = string(json)
+	}
+
+	return config.json
+}
+
 func getResult(path string) gjson.Result {
-	return gjson.Get(cfg.json, path)
+	return gjson.Get(cfg.loadJson(), path)
 }
 
 func String(path string) string {
 	return getResult(path).String()
+}
+
+func Bool(path string) bool {
+	return getResult(path).Bool()
 }
 
 func Int(path string) int64 {
@@ -46,14 +75,4 @@ func Array(path string) (slice []string) {
 	return slice
 }
 
-func (config *config) loadJson() {
-	if len(config.json) == 0 {
-		fileName, _ := filepath.Abs(config.FilePath)
-		json, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			os.Exit(1)
-		}
 
-		config.json = string(json)
-	}
-}
