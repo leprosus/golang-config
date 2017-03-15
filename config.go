@@ -18,6 +18,7 @@ type config struct {
 
 var cfg config = config{}
 
+// Init config: set file path to config file and period config refresh
 func Init(filePath string, refreshPeriod int) {
 	if len(cfg.filePath) == 0 {
 		cfg = config{
@@ -53,18 +54,22 @@ func getResult(path string) gjson.Result {
 	return gjson.Get(cfg.loadJson(), path)
 }
 
+// Return string value by json-path
 func String(path string) string {
 	return getResult(path).String()
 }
 
+// Return boolean value by json-path
 func Bool(path string) bool {
 	return getResult(path).Bool()
 }
 
+// Return integer value by json-path
 func Int(path string) int64 {
 	return getResult(path).Int()
 }
 
+// Return array value by json-path
 func Array(path string) (slice []string) {
 	result := getResult(path)
 
@@ -74,5 +79,3 @@ func Array(path string) (slice []string) {
 
 	return slice
 }
-
-
