@@ -4,6 +4,9 @@
 
 ```go
 cfg := config.Init("./config.json", 60)
+
+// Set debug mode
+cfg.Debug(true)
 ```
 
 ## Json example
@@ -49,3 +52,4 @@ emails := cfg.Array("emails")
 * cgf.Int("json.path") - returns int64 value by json path
 * cgf.Bool("json.path") - returns boolean value by json path
 * cgf.Array("json.path") - returns strings array by json path
+* cgf.Debug(state) - set debug mode

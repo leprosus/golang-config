@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 type config struct {
@@ -14,6 +15,7 @@ type config struct {
 	json          string
 	refreshPeriod int64
 	lastRefresh   int64
+	debug         bool
 }
 
 var cfg config = config{}
@@ -25,6 +27,8 @@ func Init(filePath string, refreshPeriod int64) {
 			filePath: filePath,
 			refreshPeriod: refreshPeriod,
 			lastRefresh: time.Now().Unix()}
+
+		cfg.debug = false
 
 		cfg.loadJson()
 	}
@@ -51,32 +55,56 @@ func (config *config) loadJson() string {
 	return config.json
 }
 
-func getResult(path string) gjson.Result {
-	return gjson.Get(cfg.loadJson(), path)
+func getResult(path string) (gjson.Result, bool) {
+	if cfg.debug {
+		fmt.Printf("Try to get value by %s\n", path)
+	}
+
+	result := gjson.Get(cfg.loadJson(), path)
+
+	if !result.Exists() {
+		if cfg.debug {
+			err := errors.New(fmt.Sprintf("Can't get value by `%s`", path))
+
+			fmt.Printf("Catch error %s\n", err.Error())
+		}
+
+		return gjson.Result{}, true
+	}
+
+	return result, false
 }
 
 // Return string value by json-path
-func String(path string) string {
-	return getResult(path).String()
+func String(path string) (string, bool) {
+	result, err := getResult(path)
+
+	return result.String(), err == nil
 }
 
 // Return boolean value by json-path
-func Bool(path string) bool {
-	return getResult(path).Bool()
+func Bool(path string) (bool, bool) {
+	result, err := getResult(path)
+
+	return result.Bool(), err == nil
 }
 
 // Return integer value by json-path
-func Int(path string) int64 {
-	return getResult(path).Int()
+func Int(path string) (int64, bool) {
+	result, err := getResult(path)
+
+	return result.Int(), err == nil
 }
 
 // Return array value by json-path
-func Array(path string) (slice []string) {
-	result := getResult(path)
+func Array(path string) ([]string, bool) {
+	slice := []string{}
+
+	result, err := getResult(path)
 
 	for _, el := range result.Array() {
 		slice = append(slice, el.String())
 	}
 
-	return slice
+	return slice, err == nil
 }
