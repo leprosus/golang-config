@@ -2,13 +2,13 @@
 
 ## Create new configuration reader
 
-``` go
+```go
 cfg := config.Init("./config.json", 60)
 ```
 
 ## Json example
 
-``` json
+```json
 {
     "string": "text",
     "digit: {
@@ -27,7 +27,7 @@ NB: to get config values to need to use json-path requests [jsonpath.com](http:/
 
 ## Getting example
 
-``` go
+```go
 cfg := config.Init("./config.json", 60)
 
 text := cfg.String("string")
