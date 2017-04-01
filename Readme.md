@@ -23,7 +23,7 @@ cfg := config.Init("./config.json", 60)
 }
 ```
 
-NB: to get config values to need to use json-path requests (jsonpath.com)[http://jsonpath.com]
+NB: to get config values to need to use json-path requests [jsonpath.com](http://jsonpath.com)
 
 ## Getting example
 
