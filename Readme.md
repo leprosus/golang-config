@@ -11,9 +11,9 @@ cfg := config.Init("./config.json", 60)
 ```json
 {
     "string": "text",
-    "digit: {
-        "one: 1,
-        "two: 2
+    "digit": {
+        "one": 1,
+        "two": 2
     },
     "flag": true,
     "emails": [
