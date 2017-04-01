@@ -24,8 +24,7 @@ func Init(filePath string, refreshPeriod int64) {
 		cfg = config{
 			filePath: filePath,
 			refreshPeriod: refreshPeriod,
-			lastRefresh: time.Now().Unix(),
-		}
+			lastRefresh: time.Now().Unix()}
 
 		cfg.loadJson()
 	}
@@ -43,6 +42,8 @@ func (config *config) loadJson() string {
 
 			os.Exit(1)
 		}
+
+		config.lastRefresh = time.Now().Unix()
 
 		config.json = string(json)
 	}
