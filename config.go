@@ -75,36 +75,45 @@ func getResult(path string) (gjson.Result, bool) {
 	return result, false
 }
 
-// Return string value by json-path
-func String(path string) (string, bool) {
-	result, err := getResult(path)
+// Returns flag is value existed by json-path
+func Exist(path string) (bool) {
+	_, ok := getResult(path)
 
-	return result.String(), err == nil
+	return ok
 }
 
-// Return boolean value by json-path
-func Bool(path string) (bool, bool) {
-	result, err := getResult(path)
+// Returns string value by json-path
+func String(path string) (string) {
+	result, _ := getResult(path)
 
-	return result.Bool(), err == nil
+	return result.String()
 }
 
-// Return integer value by json-path
-func Int(path string) (int64, bool) {
-	result, err := getResult(path)
+// Returns boolean value by json-path
+func Bool(path string) (bool) {
+	result, _ := getResult(path)
 
-	return result.Int(), err == nil
+	return result.Bool()
 }
 
-// Return array value by json-path
-func Array(path string) ([]string, bool) {
+// Returns integer value by json-path
+func Int(path string) (int64) {
+	result, _ := getResult(path)
+
+	return result.Int()
+}
+
+// Returns array value by json-path
+func Array(path string) ([]string) {
 	slice := []string{}
 
-	result, err := getResult(path)
+	result, ok := getResult(path)
 
-	for _, el := range result.Array() {
-		slice = append(slice, el.String())
+	if ok {
+		for _, el := range result.Array() {
+			slice = append(slice, el.String())
+		}
 	}
 
-	return slice, err == nil
+	return slice
 }
