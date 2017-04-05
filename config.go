@@ -75,7 +75,7 @@ func getResult(path string) (gjson.Result, bool) {
 }
 
 func RefreshPeriod(refreshPeriod int64) {
-	config.refreshPeriod = refreshPeriod
+	cfg.refreshPeriod = refreshPeriod
 }
 
 // Returns flag is value existed by json-path
