@@ -74,6 +74,10 @@ func getResult(path string) (gjson.Result, bool) {
 	return result, false
 }
 
+func Debug(mode bool) {
+	cfg.debug = mode
+}
+
 func RefreshPeriod(refreshPeriod int64) {
 	cfg.refreshPeriod = refreshPeriod
 }
