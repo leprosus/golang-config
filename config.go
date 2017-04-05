@@ -29,6 +29,12 @@ func Init(filePath string) {
 
 		cfg.stdout = false
 
+		cfg.logger = func(message string) {
+			if cfg.stdout {
+				fmt.Println(message)
+			}
+		}
+
 		cfg.loadJson()
 	}
 }
