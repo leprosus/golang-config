@@ -47,7 +47,7 @@ func (config *config) loadJson() string {
 
 		json, err := ioutil.ReadFile(fileName)
 		if err != nil {
-			message := fmt.Sprintf("Can't load config file by %s\n", fileName)
+			message := fmt.Sprintf("Can't load config file by %s", fileName)
 			cfg.logger(message)
 
 			os.Exit(1)
@@ -62,7 +62,7 @@ func (config *config) loadJson() string {
 }
 
 func getResult(path string) (gjson.Result, bool) {
-	cfg.logger(fmt.Sprintf("Try to get value by %s\n", path))
+	cfg.logger(fmt.Sprintf("Try to get value by %s", path))
 
 	result := gjson.Get(cfg.loadJson(), path)
 
