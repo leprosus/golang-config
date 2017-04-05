@@ -21,11 +21,10 @@ type config struct {
 var cfg config = config{}
 
 // Init config: set file path to config file and period config refresh
-func Init(filePath string, refreshPeriod int64) {
+func Init(filePath string) {
 	if len(cfg.filePath) == 0 {
 		cfg = config{
 			filePath: filePath,
-			refreshPeriod: refreshPeriod,
 			lastRefresh: time.Now().Unix()}
 
 		cfg.debug = false
@@ -37,7 +36,7 @@ func Init(filePath string, refreshPeriod int64) {
 func (config *config) loadJson() string {
 	timeDiff := time.Now().Unix() - config.lastRefresh
 
-	if len(config.json) == 0 || timeDiff > config.refreshPeriod {
+	if len(config.json) == 0 || (config.refreshPeriod > 0 && timeDiff > config.refreshPeriod) {
 		fileName, _ := filepath.Abs(config.filePath)
 
 		json, err := ioutil.ReadFile(fileName)
@@ -73,6 +72,10 @@ func getResult(path string) (gjson.Result, bool) {
 	}
 
 	return result, false
+}
+
+func RefreshPeriod(refreshPeriod int64) {
+	config.refreshPeriod = refreshPeriod
 }
 
 // Returns flag is value existed by json-path

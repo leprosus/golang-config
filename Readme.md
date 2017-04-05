@@ -3,7 +3,7 @@
 ## Create new configuration reader
 
 ```go
-cfg := config.Init("./config.json", 60)
+cfg := config.Init("./config.json")
 
 // Set debug mode
 cfg.Debug(true)
@@ -44,7 +44,8 @@ emails := cfg.Array("emails")
 
 ### Initialization
 
-* config.Init(path, refreshPeriod) - initializes configuration loading
+* config.Init(path) - initializes configuration loading
+* config.RefreshPeriod(refreshPeriod) - set period of data refreshing in seconds
 
 ### Getting data
 
