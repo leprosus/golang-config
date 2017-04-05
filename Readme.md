@@ -5,8 +5,8 @@
 ```go
 cfg := config.Init("./config.json")
 
-// Set debug mode
-cfg.Debug(true)
+// To print debug information in stdout
+cfg.Stdout(true)
 ```
 
 ## Json example
@@ -46,6 +46,8 @@ emails := cfg.Array("emails")
 
 * config.Init(path) - initializes configuration loading
 * config.RefreshPeriod(refreshPeriod) - set period of data refreshing in seconds
+* config.Stdout(mode) - to set out all debug information into stdout
+* config.Logger(func(message string)) - sets custom logger
 
 ### Getting data
 

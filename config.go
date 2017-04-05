@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 type config struct {
@@ -15,7 +14,8 @@ type config struct {
 	json          string
 	refreshPeriod int64
 	lastRefresh   int64
-	debug         bool
+	stdout        bool
+	logger        func(message string)
 }
 
 var cfg config = config{}
@@ -27,7 +27,7 @@ func Init(filePath string) {
 			filePath: filePath,
 			lastRefresh: time.Now().Unix()}
 
-		cfg.debug = false
+		cfg.stdout = false
 
 		cfg.loadJson()
 	}
@@ -41,7 +41,8 @@ func (config *config) loadJson() string {
 
 		json, err := ioutil.ReadFile(fileName)
 		if err != nil {
-			fmt.Printf("Can't load config file by %s\n", fileName)
+			message := fmt.Sprintf("Can't load config file by %s\n", fileName)
+			cfg.logger(message)
 
 			os.Exit(1)
 		}
@@ -55,18 +56,13 @@ func (config *config) loadJson() string {
 }
 
 func getResult(path string) (gjson.Result, bool) {
-	if cfg.debug {
-		fmt.Printf("Try to get value by %s\n", path)
-	}
+	cfg.logger(fmt.Sprintf("Try to get value by %s\n", path))
 
 	result := gjson.Get(cfg.loadJson(), path)
 
 	if !result.Exists() {
-		if cfg.debug {
-			err := errors.New(fmt.Sprintf("Can't get value by `%s`", path))
-
-			fmt.Printf("Catch error %s\n", err.Error())
-		}
+		message := fmt.Sprintf("Can't get value by `%s`", path)
+		cfg.logger(message)
 
 		return gjson.Result{}, true
 	}
@@ -74,8 +70,18 @@ func getResult(path string) (gjson.Result, bool) {
 	return result, false
 }
 
-func Debug(mode bool) {
-	cfg.debug = mode
+func Stdout(mode bool) {
+	cfg.stdout = mode
+}
+
+func Logger(callback func(message string)) {
+	cfg.logger = func(message string) {
+		callback(message)
+
+		if cfg.stdout {
+			fmt.Println(message)
+		}
+	}
 }
 
 func RefreshPeriod(refreshPeriod int64) {
