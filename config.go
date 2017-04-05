@@ -88,6 +88,8 @@ func Logger(callback func(message string)) {
 			fmt.Println(message)
 		}
 	}
+
+	cfg.logger("Set custom logger")
 }
 
 func RefreshPeriod(refreshPeriod int64) {
