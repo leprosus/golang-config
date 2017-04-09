@@ -24,21 +24,22 @@ type logger struct {
     fatal func(message string)
 }
 
-var cfg config = config{}
+var cfg config = config{
+    logger: logger{
+        debug: func(message string) {},
+        info:  func(message string) {},
+        warn:  func(message string) {},
+        error: func(message string) {},
+        fatal: func(message string) {}}}
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) {
+    cfg.logger.info("Configuration is intialized")
+
     if len(cfg.filePath) == 0 {
         cfg = config{
             filePath:    filePath,
             lastRefresh: time.Now().Unix()}
-
-        cfg.logger = logger{
-            debug: func(message string) {},
-            info:  func(message string) {},
-            warn:  func(message string) {},
-            error: func(message string) {},
-            fatal: func(message string) {}}
 
         cfg.loadJson()
     }
