@@ -47,7 +47,11 @@ emails := cfg.Array("emails")
 * config.Init(path) - initializes configuration loading
 * config.RefreshPeriod(refreshPeriod) - set period of data refreshing in seconds
 * config.Stdout(mode) - to set out all debug information into stdout
-* config.Logger(func(message string)) - sets custom logger
+* config.Debug(func(message string)) - sets custom logger for debug
+* config.Info(func(message string)) - sets custom logger for info
+* config.Warn(func(message string)) - sets custom logger for warn
+* config.Error(func(message string)) - sets custom logger for error
+* config.Fatal(func(message string)) - sets custom logger for fatal
 
 ### Getting data
 
@@ -55,4 +59,3 @@ emails := cfg.Array("emails")
 * cgf.Int("json.path") - returns int64 value by json path
 * cgf.Bool("json.path") - returns boolean value by json path
 * cgf.Array("json.path") - returns strings array by json path
-* cgf.Debug(state) - set debug mode
