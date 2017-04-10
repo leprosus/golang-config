@@ -37,9 +37,8 @@ func Init(filePath string) {
     cfg.logger.info("Configuration is intialized")
 
     if len(cfg.filePath) == 0 {
-        cfg = config{
-            filePath:    filePath,
-            lastRefresh: time.Now().Unix()}
+        cfg.filePath = filePath
+        cfg.lastRefresh = time.Now().Unix()
 
         cfg.loadJson()
     }
@@ -119,7 +118,6 @@ func Fatal(callback func(message string)) {
 // Refreshes configuration reloading
 func RefreshPeriod(refreshPeriod int64) {
     cfg.refreshPeriod = refreshPeriod
-
     cfg.logger.debug(fmt.Sprintf("Set new refresh period %d s", refreshPeriod))
 }
 
