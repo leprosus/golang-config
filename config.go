@@ -1,11 +1,11 @@
 package config
 
 import (
-	"path/filepath"
-	"io/ioutil"
-	"github.com/tidwall/gjson"
 	"fmt"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 type config struct {
@@ -122,35 +122,35 @@ func Fatal(callback func(message string)) {
 }
 
 // Returns flag is value existed by json-path
-func Exist(path string) (bool) {
+func Exist(path string) bool {
 	_, ok := getResult(path)
 
 	return ok
 }
 
 // Returns string value by json-path
-func String(path string) (string) {
+func String(path string) string {
 	result, _ := getResult(path)
 
 	return result.String()
 }
 
 // Returns boolean value by json-path
-func Bool(path string) (bool) {
+func Bool(path string) bool {
 	result, _ := getResult(path)
 
 	return result.Bool()
 }
 
 // Returns integer value by json-path
-func Int(path string) (int64) {
+func Int(path string) int64 {
 	result, _ := getResult(path)
 
 	return result.Int()
 }
 
 // Returns array value by json-path
-func Array(path string) ([]string) {
+func Array(path string) []string {
 	slice := []string{}
 
 	result, ok := getResult(path)
