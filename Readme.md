@@ -45,7 +45,6 @@ emails := cfg.Array("emails")
 ### Initialization
 
 * config.Init(path) - initializes configuration loading
-* config.RefreshPeriod(refreshPeriod) - set period of data refreshing in seconds
 * config.Stdout(mode) - to set out all debug information into stdout
 * config.Debug(func(message string)) - sets custom logger for debug
 * config.Info(func(message string)) - sets custom logger for info

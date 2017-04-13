@@ -4,15 +4,14 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"github.com/tidwall/gjson"
-	"time"
 	"fmt"
+	"os"
 )
 
 type config struct {
 	filePath      string
 	json          string
-	refreshPeriod int64
-	lastRefresh   int64
+	fileTimestamp int64
 	logger        logger
 }
 
@@ -38,41 +37,48 @@ func Init(filePath string) {
 
 	if len(cfg.filePath) == 0 {
 		cfg.filePath = filePath
-		cfg.lastRefresh = time.Now().Unix()
 
-		cfg.loadJson()
+		getJson()
 	}
 }
 
-func (config *config) loadJson() string {
-	timeDiff := time.Now().Unix() - config.lastRefresh
+func getJson() string {
+	fileName, _ := filepath.Abs(cfg.filePath)
 
-	if len(config.json) == 0 || (config.refreshPeriod > 0 && timeDiff > config.refreshPeriod) {
-		if len(config.json) == 0 {
+	info, err := os.Stat(cfg.filePath)
+	if err != nil {
+		cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+
+		return cfg.json
+	}
+
+	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
+
+		json, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+
+			return cfg.json
+		}
+
+		cfg.fileTimestamp = info.ModTime().Unix()
+
+		cfg.json = string(json)
+
+		if len(cfg.json) == 0 {
 			cfg.logger.info("Configuration is loaded")
 		} else {
 			cfg.logger.info("Configuration is reloaded")
 		}
-
-		fileName, _ := filepath.Abs(config.filePath)
-
-		json, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s", fileName))
-		}
-
-		config.lastRefresh = time.Now().Unix()
-
-		config.json = string(json)
 	}
 
-	return config.json
+	return cfg.json
 }
 
 func getResult(path string) (gjson.Result, bool) {
 	cfg.logger.debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := gjson.Get(cfg.loadJson(), path)
+	result := gjson.Get(getJson(), path)
 
 	if !result.Exists() {
 		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
@@ -113,12 +119,6 @@ func Error(callback func(message string)) {
 func Fatal(callback func(message string)) {
 	cfg.logger.fatal = callback
 	cfg.logger.debug("Set custom fatal logger")
-}
-
-// Refreshes configuration reloading
-func RefreshPeriod(refreshPeriod int64) {
-	cfg.refreshPeriod = refreshPeriod
-	cfg.logger.debug(fmt.Sprintf("Set new refresh period %d s", refreshPeriod))
 }
 
 // Returns flag is value existed by json-path
