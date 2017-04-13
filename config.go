@@ -53,7 +53,6 @@ func getJson() string {
 	}
 
 	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
-
 		json, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
