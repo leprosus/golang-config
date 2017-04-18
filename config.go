@@ -35,11 +35,7 @@ var cfg config = config{
 func Init(filePath string) {
 	cfg.logger.info("Configuration is intialized")
 
-	if len(cfg.filePath) == 0 {
-		cfg.filePath = filePath
-
-		getJson()
-	}
+	cfg.filePath = filePath
 }
 
 func getJson() string {
