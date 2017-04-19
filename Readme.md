@@ -51,6 +51,7 @@ emails := cfg.Array("emails")
 * config.Warn(func(message string)) - sets custom logger for warn
 * config.Error(func(message string)) - sets custom logger for error
 * config.Fatal(func(message string)) - sets custom logger for fatal
+* config.Refresh(func()) - sets callback on refresh
 
 ### Getting data
 
