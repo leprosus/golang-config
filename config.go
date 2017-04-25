@@ -13,7 +13,7 @@ type config struct {
 	json          string
 	fileTimestamp int64
 	logger        logger
-	refresh       func()
+	refresh       []func()
 }
 
 type logger struct {
@@ -31,7 +31,7 @@ var cfg config = config{
 		warn:  func(message string) {},
 		error: func(message string) {},
 		fatal: func(message string) {}},
-	refresh: func() {}}
+	refresh: []func(){}}
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) {
@@ -68,7 +68,9 @@ func getJson() string {
 			cfg.logger.info("Configuration is reloaded")
 		}
 
-		cfg.refresh()
+		for _, callback := range cfg.refresh {
+			callback()
+		}
 	}
 
 	return cfg.json
@@ -120,10 +122,10 @@ func Fatal(callback func(message string)) {
 	cfg.logger.debug("Set custom fatal logger")
 }
 
-// Sets callback on refresh
+// Adds callback on refresh
 func Refresh(callback func()) {
-	cfg.refresh = callback
-	cfg.logger.debug("Set callback on refresh")
+	cfg.refresh = append(cfg.refresh, callback)
+	cfg.logger.debug("Add callback on refresh")
 }
 
 // Returns flag is value existed by json-path
