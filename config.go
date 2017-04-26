@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"encoding/json"
 )
 
 type config struct {
@@ -51,16 +52,20 @@ func getJson() string {
 	}
 
 	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
-		json, err := ioutil.ReadFile(fileName)
+		jsonStr, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
 
 			return cfg.json
 		}
 
-		cfg.fileTimestamp = info.ModTime().Unix()
+		if !isJson(jsonStr) {
+			cfg.logger.fatal(fmt.Sprintf("File %s isn't valid json", fileName))
 
-		cfg.json = string(json)
+			return cfg.json
+		}
+
+		cfg.fileTimestamp = info.ModTime().Unix()
 
 		if len(cfg.json) == 0 {
 			cfg.logger.info("Configuration is loaded")
@@ -68,12 +73,20 @@ func getJson() string {
 			cfg.logger.info("Configuration is reloaded")
 		}
 
+		cfg.json = string(jsonStr)
+
 		for _, callback := range cfg.refresh {
 			callback()
 		}
 	}
 
 	return cfg.json
+}
+
+func isJson(jsonStr []byte) bool {
+	var data map[string]interface{}
+	return json.Unmarshal(jsonStr, &data) == nil
+
 }
 
 func getResult(path string) (gjson.Result, bool) {
