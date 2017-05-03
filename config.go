@@ -97,12 +97,12 @@ func getResult(path string) (gjson.Result, bool) {
 	if !result.Exists() {
 		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
 
-		return gjson.Result{}, true
+		return gjson.Result{}, false
 	}
 
 	cfg.logger.debug(fmt.Sprintf("Value by path `%s` is exist and is set `%s`", path, result.String()))
 
-	return result, false
+	return result, true
 }
 
 // Sets logger for debig
@@ -143,9 +143,7 @@ func Refresh(callback func()) {
 
 // Returns flag is value existed by json-path
 func Exist(path string) bool {
-	_, ok := getResult(path)
-
-	return ok
+	return gjson.Get(getJson(), path).Exists()
 }
 
 // Returns string value by json-path
