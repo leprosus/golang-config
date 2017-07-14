@@ -7,14 +7,22 @@ import (
 	"os"
 	"path/filepath"
 	"encoding/json"
+	"sync"
+	"time"
+	"crypto/md5"
+	"io"
+	"github.com/pkg/errors"
 )
 
 type config struct {
-	filePath      string
-	json          string
-	fileTimestamp int64
-	logger        logger
-	refresh       []func()
+	sync.Mutex
+	sync.Once
+
+	filePath string
+	json     string
+	md5      string
+	logger   logger
+	refresh  []func()
 }
 
 type logger struct {
@@ -36,36 +44,44 @@ var cfg config = config{
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) {
-	cfg.logger.info("Configuration is intialized")
+	cfg.logger.info("Configuration is initialized")
 
-	cfg.filePath = filePath
+	cfg.filePath, _ = filepath.Abs(filePath)
+	refreshJson()
+
+	cfg.Do(func() {
+		go watchFile()
+	})
 }
 
-func getJson() string {
-	fileName, _ := filepath.Abs(cfg.filePath)
-
-	info, err := os.Stat(cfg.filePath)
+func refreshJson() {
+	_, err := os.Stat(cfg.filePath)
 	if err != nil {
-		cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+		cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", cfg.filePath, err.Error()))
 
-		return cfg.json
+		return
 	}
 
-	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
-		jsonStr, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+	fileMd5, err := getFileMd5(cfg.filePath)
+	if err != nil {
+		cfg.logger.error(err.Error())
 
-			return cfg.json
+		return
+	}
+
+	if cfg.md5 != fileMd5 {
+		jsonStr, err := ioutil.ReadFile(cfg.filePath)
+		if err != nil {
+			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", cfg.filePath, err.Error()))
+
+			return
 		}
 
 		if !isJson(jsonStr) {
-			cfg.logger.fatal(fmt.Sprintf("File %s isn't valid json", fileName))
+			cfg.logger.fatal(fmt.Sprintf("File %s isn't valid json", cfg.filePath))
 
-			return cfg.json
+			return
 		}
-
-		cfg.fileTimestamp = info.ModTime().Unix()
 
 		if len(cfg.json) == 0 {
 			cfg.logger.info("Configuration is loaded")
@@ -73,14 +89,41 @@ func getJson() string {
 			cfg.logger.info("Configuration is reloaded")
 		}
 
+		cfg.Lock()
+		defer cfg.Unlock()
 		cfg.json = string(jsonStr)
+
+		cfg.md5 = fileMd5
 
 		for _, callback := range cfg.refresh {
 			callback()
 		}
 	}
+}
 
-	return cfg.json
+func getFileMd5(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", errors.Errorf("Can't read file %s because %s", filePath, err.Error())
+	}
+	defer file.Close()
+
+	h := md5.New()
+	if _, err := io.Copy(h, file); err != nil {
+		return "", errors.Errorf("Can't copy file %s to hash function because %s", filePath, err.Error())
+	}
+
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+
+	return hash, nil
+}
+
+func watchFile() {
+	for {
+		refreshJson()
+
+		time.Sleep(30 * time.Second)
+	}
 }
 
 func isJson(jsonStr []byte) bool {
@@ -92,7 +135,7 @@ func isJson(jsonStr []byte) bool {
 func getResult(path string) (gjson.Result, bool) {
 	cfg.logger.debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := gjson.Get(getJson(), path)
+	result := gjson.Get(cfg.json, path)
 
 	if !result.Exists() {
 		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
@@ -143,7 +186,7 @@ func Refresh(callback func()) {
 
 // Returns flag is value existed by json-path
 func Exist(path string) bool {
-	return gjson.Get(getJson(), path).Exists()
+	return gjson.Get(cfg.json, path).Exists()
 }
 
 // Returns string value by json-path
