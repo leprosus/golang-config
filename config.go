@@ -12,14 +12,14 @@ import (
 	"crypto/md5"
 	"io"
 	"github.com/pkg/errors"
+	"sync/atomic"
 )
 
 type config struct {
-	sync.Mutex
 	sync.Once
 
 	filePath string
-	json     string
+	json     atomic.Value
 	md5      string
 	logger   logger
 	refresh  []func()
@@ -83,15 +83,13 @@ func refreshJson() {
 			return
 		}
 
-		if len(cfg.json) == 0 {
+		if cfg.json.Load() == nil{
 			cfg.logger.info("Configuration is loaded")
 		} else {
 			cfg.logger.info("Configuration is reloaded")
 		}
 
-		cfg.Lock()
-		defer cfg.Unlock()
-		cfg.json = string(jsonStr)
+		cfg.json.Store(string(jsonStr))
 
 		cfg.md5 = fileMd5
 
@@ -135,7 +133,8 @@ func isJson(jsonStr []byte) bool {
 func getResult(path string) (gjson.Result, bool) {
 	cfg.logger.debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := gjson.Get(cfg.json, path)
+	jsonStr := cfg.json.Load().(string)
+	result := gjson.Get(jsonStr, path)
 
 	if !result.Exists() {
 		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
@@ -186,7 +185,8 @@ func Refresh(callback func()) {
 
 // Returns flag is value existed by json-path
 func Exist(path string) bool {
-	return gjson.Get(cfg.json, path).Exists()
+	jsonStr := cfg.json.Load().(string)
+	return gjson.Get(jsonStr, path).Exists()
 }
 
 // Returns string value by json-path
