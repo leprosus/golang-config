@@ -83,7 +83,7 @@ func refreshJson() {
 			return
 		}
 
-		if cfg.json.Load() == nil{
+		if cfg.json.Load() == nil {
 			cfg.logger.info("Configuration is loaded")
 		} else {
 			cfg.logger.info("Configuration is reloaded")
