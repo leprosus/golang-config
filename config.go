@@ -31,11 +31,11 @@ type logger struct {
 var (
 	cfg config = config{
 		logger: logger{
-			debug: func(message string) { fmt.Fprintln(os.Stdout, message) },
-			info:  func(message string) { fmt.Fprintln(os.Stdout, message) },
-			warn:  func(message string) { fmt.Fprintln(os.Stdout, message) },
-			error: func(message string) { fmt.Fprintln(os.Stderr, message) },
-			fatal: func(message string) { fmt.Fprintln(os.Stderr, message) }},
+			debug: func(message string) {},
+			info:  func(message string) {},
+			warn:  func(message string) {},
+			error: func(message string) {},
+			fatal: func(message string) {}},
 		refresh: []func(){}}
 	once = sync.Once{}
 )
