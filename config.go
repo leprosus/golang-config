@@ -1,12 +1,14 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"encoding/json"
+	"sync"
+	"time"
 )
 
 type config struct {
@@ -15,6 +17,7 @@ type config struct {
 	fileTimestamp int64
 	logger        logger
 	refresh       []func()
+	mx            sync.Mutex
 }
 
 type logger struct {
@@ -25,44 +28,67 @@ type logger struct {
 	fatal func(message string)
 }
 
-var cfg config = config{
-	logger: logger{
-		debug: func(message string) {},
-		info:  func(message string) {},
-		warn:  func(message string) {},
-		error: func(message string) {},
-		fatal: func(message string) {}},
-	refresh: []func(){}}
+var (
+	cfg config = config{
+		logger: logger{
+			debug: func(message string) { fmt.Fprintln(os.Stdout, message) },
+			info:  func(message string) { fmt.Fprintln(os.Stdout, message) },
+			warn:  func(message string) { fmt.Fprintln(os.Stdout, message) },
+			error: func(message string) { fmt.Fprintln(os.Stderr, message) },
+			fatal: func(message string) { fmt.Fprintln(os.Stderr, message) }},
+		refresh: []func(){}}
+	once = sync.Once{}
+)
 
 // Init config: set file path to config file and period config refresh
-func Init(filePath string) {
-	cfg.logger.info("Configuration is intialized")
+func Init(filePath string) (err error) {
+	cfg.logger.info("Configuration is initialized")
 
 	cfg.filePath = filePath
+
+	once.Do(func() {
+		err = refreshJson()
+
+		go func() {
+			ticker := time.NewTicker(time.Second)
+
+			for range ticker.C {
+				err = refreshJson()
+
+				cfg.logger.error(err.Error())
+			}
+		}()
+	})
+
+	return
 }
 
 func getJson() string {
+	return cfg.json
+}
+
+func refreshJson() (err error) {
 	fileName, _ := filepath.Abs(cfg.filePath)
 
 	info, err := os.Stat(cfg.filePath)
 	if err != nil {
-		cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+		err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
 
-		return cfg.json
+		return
 	}
 
 	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
 		jsonStr, err := ioutil.ReadFile(fileName)
 		if err != nil {
-			cfg.logger.fatal(fmt.Sprintf("Can't load config file by %s: %s", fileName, err.Error()))
+			err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
 
-			return cfg.json
+			return
 		}
 
 		if !isJson(jsonStr) {
-			cfg.logger.fatal(fmt.Sprintf("File %s isn't valid json", fileName))
+			err = fmt.Errorf("file %s isn't valid json", fileName)
 
-			return cfg.json
+			return
 		}
 
 		cfg.fileTimestamp = info.ModTime().Unix()
@@ -76,11 +102,11 @@ func getJson() string {
 		cfg.json = string(jsonStr)
 
 		for _, callback := range cfg.refresh {
-			callback()
+			go callback()
 		}
 	}
 
-	return cfg.json
+	return
 }
 
 func isJson(jsonStr []byte) bool {
@@ -167,10 +193,15 @@ func Int(path string) int64 {
 	return result.Int()
 }
 
-// Returns array value by json-path
-func Array(path string) []string {
-	slice := []string{}
+// Returns float value by json-path
+func Float(path string) float64 {
+	result, _ := getResult(path)
 
+	return result.Float()
+}
+
+// Returns array value by json-path
+func Array(path string) (slice []string) {
 	result, ok := getResult(path)
 
 	if ok {
@@ -179,5 +210,5 @@ func Array(path string) []string {
 		}
 	}
 
-	return slice
+	return
 }
