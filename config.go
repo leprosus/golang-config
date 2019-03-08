@@ -48,16 +48,23 @@ func Init(filePath string) (err error) {
 
 	once.Do(func() {
 		err = refreshJson()
+		if err != nil {
+			return
+		}
 
 		go func() {
 			ticker := time.NewTicker(time.Second)
 
 			for range ticker.C {
-				err = refreshJson()
+				err := refreshJson()
 
-				cfg.logger.error(err.Error())
+				if err != nil {
+					cfg.logger.error(err.Error())
+				}
 			}
 		}()
+
+		time.Sleep(time.Second)
 	})
 
 	return
@@ -78,7 +85,8 @@ func refreshJson() (err error) {
 	}
 
 	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
-		jsonStr, err := ioutil.ReadFile(fileName)
+		var jsonStr []byte
+		jsonStr, err = ioutil.ReadFile(fileName)
 		if err != nil {
 			err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
 
