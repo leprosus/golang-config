@@ -17,7 +17,8 @@ type config struct {
 	fileTimestamp int64
 	logger        logger
 	refresh       []func()
-	mx            sync.Mutex
+	once          *sync.Once
+	mx            *sync.RWMutex
 }
 
 type logger struct {
@@ -29,24 +30,29 @@ type logger struct {
 }
 
 var (
-	cfg config = config{
+	cfg = config{
 		logger: logger{
 			debug: func(message string) {},
 			info:  func(message string) {},
 			warn:  func(message string) {},
 			error: func(message string) {},
 			fatal: func(message string) {}},
-		refresh: []func(){}}
-	once = sync.Once{}
+		refresh: []func(){},
+		once:    &sync.Once{},
+		mx:      &sync.RWMutex{},
+	}
 )
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) (err error) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.info("Configuration is initialized")
 
 	cfg.filePath = filePath
 
-	once.Do(func() {
+	cfg.once.Do(func() {
 		err = refreshJson()
 		if err != nil {
 			return
@@ -59,7 +65,9 @@ func Init(filePath string) (err error) {
 				err := refreshJson()
 
 				if err != nil {
+					cfg.mx.RLock()
 					cfg.logger.error(err.Error())
+					cfg.mx.RUnlock()
 				}
 			}
 		}()
@@ -128,7 +136,10 @@ func isJson(jsonStr []byte) bool {
 
 }
 
-func getResult(path string) (gjson.Result, bool) {
+func getResult(path string) (*gjson.Result, bool) {
+	cfg.mx.RLock()
+	defer cfg.mx.RUnlock()
+
 	cfg.logger.debug(fmt.Sprintf("Try to get value by %s", path))
 
 	result := gjson.Get(getJson(), path)
@@ -136,46 +147,64 @@ func getResult(path string) (gjson.Result, bool) {
 	if !result.Exists() {
 		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
 
-		return gjson.Result{}, false
+		return &gjson.Result{}, false
 	}
 
 	cfg.logger.debug(fmt.Sprintf("Value by path `%s` is exist and is set `%s`", path, result.String()))
 
-	return result, true
+	return &result, true
 }
 
-// Sets logger for debig
+// Sets logger for debug
 func Debug(callback func(message string)) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.debug = callback
 	cfg.logger.debug("Set custom debug logger")
 }
 
 // Sets logger for into
 func Info(callback func(message string)) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.info = callback
 	cfg.logger.debug("Set custom info logger")
 }
 
 // Sets logger for warning
 func Warn(callback func(message string)) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.warn = callback
 	cfg.logger.debug("Set custom warning logger")
 }
 
 // Sets logger for error
 func Error(callback func(message string)) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.error = callback
 	cfg.logger.debug("Set custom error logger")
 }
 
 // Sets logger for fatal
 func Fatal(callback func(message string)) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.logger.fatal = callback
 	cfg.logger.debug("Set custom fatal logger")
 }
 
 // Adds callback on refresh
 func Refresh(callback func()) {
+	cfg.mx.Lock()
+	defer cfg.mx.Unlock()
+
 	cfg.refresh = append(cfg.refresh, callback)
 	cfg.logger.debug("Add callback on refresh")
 }
