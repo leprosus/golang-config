@@ -118,12 +118,9 @@ func refreshJson() (err error) {
 		cfg.json = string(jsonStr)
 
 		for _, callback := range cfg.refresh {
-			go func() {
-				cfg.mx.Lock()
-				defer cfg.mx.Unlock()
-
-				callback()
-			}()
+			cfg.mx.Lock()
+			callback()
+			cfg.mx.Unlock()
 		}
 	}
 
