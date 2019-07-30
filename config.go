@@ -45,9 +45,6 @@ var (
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) (err error) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
-
 	cfg.logger.info("Configuration is initialized")
 
 	cfg.filePath = filePath
@@ -118,9 +115,11 @@ func refreshJson() (err error) {
 		cfg.json = string(jsonStr)
 
 		for _, callback := range cfg.refresh {
-			cfg.mx.Lock()
+			mx := &sync.Mutex{}
+
+			mx.Lock()
 			callback()
-			cfg.mx.Unlock()
+			mx.Unlock()
 		}
 	}
 
@@ -129,8 +128,8 @@ func refreshJson() (err error) {
 
 func isJson(jsonStr []byte) bool {
 	var data map[string]interface{}
-	return json.Unmarshal(jsonStr, &data) == nil
 
+	return json.Unmarshal(jsonStr, &data) == nil
 }
 
 func getResult(path string) (*gjson.Result, bool) {
