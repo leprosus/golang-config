@@ -8,18 +8,19 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
-type config struct {
-	filePath      string
-	json          string
-	fileTimestamp int64
-	logger        logger
-	refresh       []func()
-	once          *sync.Once
-	mx            *sync.RWMutex
-}
+var (
+	once         = &sync.Once{}
+	cfgFilePath  = &atomic.Value{}
+	cfgJson      = &atomic.Value{}
+	cfgIsLoaded  uint32
+	cfgTimestamp int64
+	cfgLogger    = &atomic.Value{}
+	cfgRefresh   = &atomic.Value{}
+)
 
 type logger struct {
 	debug func(message string)
@@ -29,27 +30,23 @@ type logger struct {
 	fatal func(message string)
 }
 
-var (
-	cfg = config{
-		logger: logger{
-			debug: func(message string) {},
-			info:  func(message string) {},
-			warn:  func(message string) {},
-			error: func(message string) {},
-			fatal: func(message string) {}},
-		refresh: []func(){},
-		once:    &sync.Once{},
-		mx:      &sync.RWMutex{},
-	}
-)
-
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) (err error) {
-	cfg.logger.info("Configuration is initialized")
+	cfgJson.Store(gjson.ParseBytes([]byte{}))
+	cfgLogger.Store(logger{
+		debug: func(message string) {},
+		info:  func(message string) {},
+		warn:  func(message string) {},
+		error: func(message string) {},
+		fatal: func(message string) {},
+	})
 
-	cfg.filePath = filePath
+	cfgFilePath.Store(filePath)
+	cfgRefresh.Store([]func(){})
 
-	cfg.once.Do(func() {
+	cfgLogger.Load().(logger).info("Configuration is initialized")
+
+	once.Do(func() {
 		err = refreshJson()
 		if err != nil {
 			return
@@ -62,9 +59,7 @@ func Init(filePath string) (err error) {
 				err := refreshJson()
 
 				if err != nil {
-					cfg.mx.RLock()
-					cfg.logger.error(err.Error())
-					cfg.mx.RUnlock()
+					cfgLogger.Load().(logger).error(err.Error())
 				}
 			}
 		}()
@@ -75,21 +70,20 @@ func Init(filePath string) (err error) {
 	return
 }
 
-func getJson() string {
-	return cfg.json
-}
-
 func refreshJson() (err error) {
-	fileName, _ := filepath.Abs(cfg.filePath)
+	fileName, err := filepath.Abs(cfgFilePath.Load().(string))
+	if err != nil {
+		return
+	}
 
-	info, err := os.Stat(cfg.filePath)
+	info, err := os.Stat(fileName)
 	if err != nil {
 		err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
 
 		return
 	}
 
-	if len(cfg.json) == 0 || cfg.fileTimestamp != info.ModTime().Unix() {
+	if atomic.LoadUint32(&cfgIsLoaded) == 0 || atomic.LoadInt64(&cfgTimestamp) != info.ModTime().Unix() {
 		var jsonStr []byte
 		jsonStr, err = ioutil.ReadFile(fileName)
 		if err != nil {
@@ -104,19 +98,19 @@ func refreshJson() (err error) {
 			return
 		}
 
-		cfg.fileTimestamp = info.ModTime().Unix()
+		atomic.StoreInt64(&cfgTimestamp, info.ModTime().Unix())
 
-		if len(cfg.json) == 0 {
-			cfg.logger.info("Configuration is loaded")
+		if atomic.LoadUint32(&cfgIsLoaded) == 0 {
+			cfgLogger.Load().(logger).info("Configuration is loaded")
 		} else {
-			cfg.logger.info("Configuration is reloaded")
+			cfgLogger.Load().(logger).info("Configuration is reloaded")
 		}
 
-		cfg.json = string(jsonStr)
+		atomic.StoreUint32(&cfgIsLoaded, 1)
+		cfgJson.Store(gjson.ParseBytes(jsonStr))
 
-		for _, callback := range cfg.refresh {
-			mx := &sync.Mutex{}
-
+		mx := &sync.Mutex{}
+		for _, callback := range cfgRefresh.Load().([]func()) {
 			mx.Lock()
 			callback()
 			mx.Unlock()
@@ -133,81 +127,77 @@ func isJson(jsonStr []byte) bool {
 }
 
 func getResult(path string) (*gjson.Result, bool) {
-	cfg.mx.RLock()
-	defer cfg.mx.RUnlock()
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	cfg.logger.debug(fmt.Sprintf("Try to get value by %s", path))
-
-	result := gjson.Get(getJson(), path)
-
+	result := cfgJson.Load().(gjson.Result).Get(path)
 	if !result.Exists() {
-		cfg.logger.warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
 
 		return &gjson.Result{}, false
 	}
 
-	cfg.logger.debug(fmt.Sprintf("Value by path `%s` is exist and is set `%s`", path, result.String()))
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%s`", path, result.String()))
 
 	return &result, true
 }
 
 // Sets logger for debug
 func Debug(callback func(message string)) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	l := cfgLogger.Load().(logger)
+	l.debug = callback
+	cfgLogger.Store(l)
 
-	cfg.logger.debug = callback
-	cfg.logger.debug("Set custom debug logger")
+	cfgLogger.Load().(logger).debug("Set custom debug logger")
 }
 
 // Sets logger for into
 func Info(callback func(message string)) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	l := cfgLogger.Load().(logger)
+	l.info = callback
+	cfgLogger.Store(l)
 
-	cfg.logger.info = callback
-	cfg.logger.debug("Set custom info logger")
+	cfgLogger.Load().(logger).debug("Set custom info logger")
 }
 
 // Sets logger for warning
 func Warn(callback func(message string)) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	l := cfgLogger.Load().(logger)
+	l.warn = callback
+	cfgLogger.Store(l)
 
-	cfg.logger.warn = callback
-	cfg.logger.debug("Set custom warning logger")
+	cfgLogger.Load().(logger).debug("Set custom warning logger")
 }
 
 // Sets logger for error
 func Error(callback func(message string)) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	l := cfgLogger.Load().(logger)
+	l.error = callback
+	cfgLogger.Store(l)
 
-	cfg.logger.error = callback
-	cfg.logger.debug("Set custom error logger")
+	cfgLogger.Load().(logger).debug("Set custom error logger")
 }
 
 // Sets logger for fatal
 func Fatal(callback func(message string)) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	l := cfgLogger.Load().(logger)
+	l.fatal = callback
+	cfgLogger.Store(l)
 
-	cfg.logger.fatal = callback
-	cfg.logger.debug("Set custom fatal logger")
+	cfgLogger.Load().(logger).debug("Set custom fatal logger")
 }
 
 // Adds callback on refresh
 func Refresh(callback func()) {
-	cfg.mx.Lock()
-	defer cfg.mx.Unlock()
+	r := cfgRefresh.Load().([]func())
+	r = append(r, callback)
+	cfgRefresh.Store(r)
 
-	cfg.refresh = append(cfg.refresh, callback)
-	cfg.logger.debug("Add callback on refresh")
+	cfgLogger.Load().(logger).debug("Add callback on refresh")
 }
 
 // Returns flag is value existed by json-path
 func Exist(path string) bool {
-	return gjson.Get(getJson(), path).Exists()
+	return cfgJson.Load().(gjson.Result).Exists()
 }
 
 // Returns string value by json-path

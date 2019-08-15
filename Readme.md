@@ -1,4 +1,4 @@
-# Golang Json configuration reader
+# Golang thread-safe, lock-free JSON configuration reader
 
 ## Create new configuration reader
 
