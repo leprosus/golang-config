@@ -30,10 +30,9 @@ type logger struct {
 	fatal func(message string)
 }
 
-// Init config: set file path to config file and period config refresh
-func Init(filePath string) (err error) {
-	cfgFilePath.Store(filePath)
+func init() {
 	cfgJson.Store(gjson.ParseBytes([]byte{}))
+
 	cfgLogger.Store(logger{
 		debug: func(message string) {},
 		info:  func(message string) {},
@@ -41,7 +40,13 @@ func Init(filePath string) (err error) {
 		error: func(message string) {},
 		fatal: func(message string) {},
 	})
+
 	cfgRefresh.Store([]func(){})
+}
+
+// Init config: set file path to config file and period config refresh
+func Init(filePath string) (err error) {
+	cfgFilePath.Store(filePath)
 
 	cfgLogger.Load().(logger).info("Configuration is initialized")
 

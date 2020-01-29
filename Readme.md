@@ -1,5 +1,10 @@
 # Golang thread-safe, lock-free JSON configuration reader
 
+## Import
+```go
+import "github.com/leprosus/golang-config/v2"
+```
+
 ## Create new configuration reader
 
 ```go
@@ -26,7 +31,7 @@ cfg.Stdout(true)
 }
 ```
 
-NB: to get config values to need to use json-path requests [jsonpath.com](http://jsonpath.com)
+NB: to get config values to need to use simple json-path requests [jsonpath.com](http://jsonpath.com)
 
 ## Getting example
 
@@ -50,12 +55,16 @@ emails := cfg.Array("emails")
 * config.Info(func(message string)) - sets custom logger for info
 * config.Warn(func(message string)) - sets custom logger for warn
 * config.Error(func(message string)) - sets custom logger for error
-* config.Fatal(func(message string)) - sets custom logger for fatal
 * config.Refresh(func()) - adds callback on refresh
 
 ### Getting data
 
 * cgf.String("json.path") - returns string value by json path
-* cgf.Int("json.path") - returns int64 value by json path
-* cgf.Bool("json.path") - returns boolean value by json path
+* cgf.Int32("json.path") - returns int32 value by json path
+* cgf.UInt32("json.path") - returns uint32 value by json path
+* cgf.Int64("json.path") - returns int64 value by json path
+* cgf.UInt64("json.path") - returns uint64 value by json path
+* cgf.Float32("json.path") - returns float32 value by json path
+* cgf.Float64("json.path") - returns float64 value by json path
+* cgf.Bool("json.path") - returns bool value by json path
 * cgf.Array("json.path") - returns strings array by json path
