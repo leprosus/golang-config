@@ -330,3 +330,34 @@ func (r Result) IsArray(path string) (ok bool) {
 
 	return
 }
+
+func (r Result) JSON(path string) (array []string, err error) {
+	var v interface{}
+	v, err = r.Interface(path)
+	if err != nil {
+		return
+	}
+
+	slices, ok := v.(map[string]interface{})
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	for _, slice := range slices {
+		array = append(array, fmt.Sprintf("%v", slice))
+	}
+
+	return
+}
+
+func (r Result) IsJSON(path string) (ok bool) {
+	_, err := r.JSON(path)
+
+	ok = err == nil
+
+	return
+}
