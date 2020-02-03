@@ -366,7 +366,7 @@ func (c *Checker) Check(bs []byte) (err error) {
 			}
 
 			err = rule.Handler(val)
-			if !ok {
+			if err != nil {
 				err = &UnexpectedValue{
 					message: fmt.Sprintf("path `%v` has wrong value by `handler`: %v", path, err),
 				}
