@@ -1,4 +1,4 @@
-package golang_config
+package config
 
 import (
 	"fmt"
