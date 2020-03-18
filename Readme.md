@@ -2,7 +2,7 @@
 
 ## Import
 ```go
-import "github.com/leprosus/golang-config/v2"
+import "github.com/leprosus/golang-config"
 ```
 
 ## Create new configuration reader

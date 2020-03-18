@@ -1,9 +1,7 @@
-package config
+package golang_config
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,18 +25,17 @@ type logger struct {
 	info  func(message string)
 	warn  func(message string)
 	error func(message string)
-	fatal func(message string)
 }
 
 func init() {
-	cfgJson.Store(gjson.ParseBytes([]byte{}))
+	result, _ := ParseJson([]byte{})
+	cfgJson.Store(result)
 
 	cfgLogger.Store(logger{
 		debug: func(message string) {},
 		info:  func(message string) {},
 		warn:  func(message string) {},
 		error: func(message string) {},
-		fatal: func(message string) {},
 	})
 
 	cfgRefresh.Store([]func(){})
@@ -57,9 +54,7 @@ func Init(filePath string) (err error) {
 		}
 
 		go func() {
-			ticker := time.NewTicker(time.Second)
-
-			for range ticker.C {
+			for range time.NewTicker(time.Second).C {
 				err := refreshJson()
 
 				if err != nil {
@@ -67,8 +62,6 @@ func Init(filePath string) (err error) {
 				}
 			}
 		}()
-
-		time.Sleep(time.Second)
 	})
 
 	return
@@ -88,19 +81,22 @@ func refreshJson() (err error) {
 	}
 
 	if atomic.LoadUint32(&cfgIsLoaded) == 0 || atomic.LoadInt64(&cfgTimestamp) != info.ModTime().Unix() {
-		var jsonStr []byte
-		jsonStr, err = ioutil.ReadFile(fileName)
+		var bs []byte
+		bs, err = ioutil.ReadFile(fileName)
 		if err != nil {
 			err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
 
 			return
 		}
 
-		if !isJson(jsonStr) {
+		var result Result
+		result, err = ParseJson(bs)
+		if err != nil {
 			err = fmt.Errorf("file %s isn't valid json", fileName)
 
 			return
 		}
+		cfgJson.Store(result)
 
 		atomic.StoreInt64(&cfgTimestamp, info.ModTime().Unix())
 
@@ -111,7 +107,6 @@ func refreshJson() (err error) {
 		}
 
 		atomic.StoreUint32(&cfgIsLoaded, 1)
-		cfgJson.Store(gjson.ParseBytes(jsonStr))
 
 		mx := &sync.Mutex{}
 		for _, callback := range cfgRefresh.Load().([]func()) {
@@ -122,27 +117,6 @@ func refreshJson() (err error) {
 	}
 
 	return
-}
-
-func isJson(jsonStr []byte) bool {
-	var data map[string]interface{}
-
-	return json.Unmarshal(jsonStr, &data) == nil
-}
-
-func getResult(path string) (*gjson.Result, bool) {
-	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
-
-	result := cfgJson.Load().(gjson.Result).Get(path)
-	if !result.Exists() {
-		cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
-
-		return &gjson.Result{}, false
-	}
-
-	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%s`", path, result.String()))
-
-	return &result, true
 }
 
 // Sets logger for debug
@@ -181,15 +155,6 @@ func Error(callback func(message string)) {
 	cfgLogger.Load().(logger).debug("Set custom error logger")
 }
 
-// Sets logger for fatal
-func Fatal(callback func(message string)) {
-	l := cfgLogger.Load().(logger)
-	l.fatal = callback
-	cfgLogger.Store(l)
-
-	cfgLogger.Load().(logger).debug("Set custom fatal logger")
-}
-
 // Adds callback on refresh
 func Refresh(callback func()) {
 	r := cfgRefresh.Load().([]func())
@@ -201,46 +166,210 @@ func Refresh(callback func()) {
 
 // Returns flag is value existed by json-path
 func Exist(path string) bool {
-	return cfgJson.Load().(gjson.Result).Exists()
+	return cfgJson.Load().(Result).IsExist(path)
 }
 
 // Returns string value by json-path
-func String(path string) string {
-	result, _ := getResult(path)
+func String(path string) (val string) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	return result.String()
+	result := cfgJson.Load().(Result)
+
+	val, err := result.String(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
 }
 
-// Returns boolean value by json-path
-func Bool(path string) bool {
-	result, _ := getResult(path)
+// Returns bool value by json-path
+func Bool(path string) (val bool) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	return result.Bool()
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Bool(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
 }
 
-// Returns integer value by json-path
-func Int(path string) int64 {
-	result, _ := getResult(path)
+// Returns int32 value by json-path
+func Int32(path string) (val int32) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	return result.Int()
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Int32(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
 }
 
-// Returns float value by json-path
-func Float(path string) float64 {
-	result, _ := getResult(path)
+// Returns uint32 value by json-path
+func UInt32(path string) (val uint32) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	return result.Float()
+	result := cfgJson.Load().(Result)
+
+	val, err := result.UInt32(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+// Returns int64 value by json-path
+func Int64(path string) (val int64) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Int64(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+// Returns uint64 value by json-path
+func UInt64(path string) (val uint64) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	val, err := result.UInt64(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+// Returns float32 value by json-path
+func Float32(path string) (val float32) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Float32(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+// Returns float64 value by json-path
+func Float64(path string) (val float64) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Float64(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
+		}
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
 }
 
 // Returns array value by json-path
-func Array(path string) (slice []string) {
-	result, ok := getResult(path)
+func Array(path string) (val []string) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	if ok {
-		for _, el := range result.Array() {
-			slice = append(slice, el.String())
+	result := cfgJson.Load().(Result)
+
+	val, err := result.Array(path)
+	if err != nil {
+		switch err.(type) {
+		case *ValueNotExist:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` isn't exist", path))
+		case *ValueUnexpectedType:
+			cfgLogger.Load().(logger).warn(fmt.Sprintf("Value by path `%s` contains unexpected type of value", path))
 		}
+
+		return
 	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
 }

@@ -1,8 +1,3 @@
-module github.com/leprosus/golang-config/v2
-
-require (
-	github.com/stretchr/testify v1.3.0 // indirect
-	github.com/tidwall/gjson v1.3.2
-)
+module github.com/leprosus/golang-config
 
 go 1.13
