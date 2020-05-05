@@ -1,3 +1,3 @@
 module github.com/leprosus/golang-config
 
-go 1.13
+go 1.14
