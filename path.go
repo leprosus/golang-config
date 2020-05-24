@@ -83,13 +83,23 @@ func (r Result) IsExist(path string) (ok bool) {
 }
 
 func (r Result) String(path string) (str string, err error) {
-	var v interface{}
+	var (
+		v  interface{}
+		ok bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	str = fmt.Sprintf("%v", v)
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
 
 	return
 }
@@ -103,14 +113,35 @@ func (r Result) IsString(path string) (ok bool) {
 }
 
 func (r Result) Int32(path string) (i32 int32, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		f64 float64
+		i64 uint64
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	var i64 int64
-	i64, err = strconv.ParseInt(fmt.Sprintf("%v", v), 10, 32)
+	f64, ok = v.(float64)
+	if ok {
+		i32 = int32(f64)
+
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	i64, err = strconv.ParseUint(str, 10, 32)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -133,14 +164,35 @@ func (r Result) IsInt32(path string) (ok bool) {
 }
 
 func (r Result) UInt32(path string) (ui32 uint32, err error) {
-	var v interface{}
+	var (
+		v    interface{}
+		f64  float64
+		ui64 uint64
+		str  string
+		ok   bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	var ui64 uint64
-	ui64, err = strconv.ParseUint(fmt.Sprintf("%v", v), 10, 32)
+	f64, ok = v.(float64)
+	if ok {
+		ui32 = uint32(f64)
+
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	ui64, err = strconv.ParseUint(str, 10, 32)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -163,13 +215,34 @@ func (r Result) IsUInt32(path string) (ok bool) {
 }
 
 func (r Result) Int64(path string) (i64 int64, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		f64 float64
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	i64, err = strconv.ParseInt(fmt.Sprintf("%v", v), 10, 32)
+	f64, ok = v.(float64)
+	if ok {
+		i64 = int64(f64)
+
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	i64, err = strconv.ParseInt(str, 10, 64)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -190,13 +263,34 @@ func (r Result) IsInt64(path string) (ok bool) {
 }
 
 func (r Result) UInt64(path string) (ui64 uint64, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		f64 float64
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	ui64, err = strconv.ParseUint(fmt.Sprintf("%v", v), 10, 32)
+	f64, ok = v.(float64)
+	if ok {
+		ui64 = uint64(f64)
+
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	ui64, err = strconv.ParseUint(str, 10, 64)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -217,14 +311,34 @@ func (r Result) IsUInt64(path string) (ok bool) {
 }
 
 func (r Result) Float32(path string) (f32 float32, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		f64 float64
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	var f64 float64
-	f64, err = strconv.ParseFloat(fmt.Sprintf("%v", v), 32)
+	f64, ok = v.(float64)
+	if ok {
+		f32 = float32(f64)
+
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	f64, err = strconv.ParseFloat(str, 32)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -247,13 +361,31 @@ func (r Result) IsFloat32(path string) (ok bool) {
 }
 
 func (r Result) Float64(path string) (f64 float64, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	f64, err = strconv.ParseFloat(fmt.Sprintf("%v", v), 32)
+	f64, ok = v.(float64)
+	if ok {
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	f64, err = strconv.ParseFloat(str, 64)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -274,13 +406,31 @@ func (r Result) IsFloat64(path string) (ok bool) {
 }
 
 func (r Result) Bool(path string) (flag bool, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	flag, err = strconv.ParseBool(fmt.Sprintf("%v", v))
+	flag, ok = v.(bool)
+	if ok {
+		return
+	}
+
+	str, ok = v.(string)
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
+	}
+
+	flag, err = strconv.ParseBool(str)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -301,7 +451,11 @@ func (r Result) IsBool(path string) (ok bool) {
 }
 
 func (r Result) Array(path string) (array []string, err error) {
-	var v interface{}
+	var (
+		v   interface{}
+		str string
+		ok  bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
@@ -317,7 +471,16 @@ func (r Result) Array(path string) (array []string, err error) {
 	}
 
 	for _, slice := range slices {
-		array = append(array, fmt.Sprintf("%v", slice))
+		str, ok = slice.(string)
+		if !ok {
+			err = &ValueUnexpectedType{
+				message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+			}
+
+			return
+		}
+
+		array = append(array, str)
 	}
 
 	return
@@ -331,24 +494,25 @@ func (r Result) IsArray(path string) (ok bool) {
 	return
 }
 
-func (r Result) JSON(path string) (array []string, err error) {
-	var v interface{}
+func (r Result) JSON(path string) (object map[string]interface{}, err error) {
+	object = map[string]interface{}{}
+
+	var (
+		v  interface{}
+		ok bool
+	)
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	slices, ok := v.(map[string]interface{})
+	object, ok = v.(map[string]interface{})
 	if !ok {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
 		}
 
 		return
-	}
-
-	for _, slice := range slices {
-		array = append(array, fmt.Sprintf("%v", slice))
 	}
 
 	return
