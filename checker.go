@@ -66,16 +66,17 @@ func (e *UnexpectedValue) Error() string {
 }
 
 const (
-	StringType  Type = "string"
-	BoolType    Type = "bool"
-	Int32Type   Type = "int32"
-	UInt32Type  Type = "uint32"
-	Int64Type   Type = "int64"
-	UInt64Type  Type = "uint64"
-	Float32Type Type = "float32"
-	Float64Type Type = "float64"
-	ArrayType   Type = "array"
-	JSONType    Type = "json"
+	StringType   Type = "string"
+	BoolType     Type = "bool"
+	Int32Type    Type = "int32"
+	UInt32Type   Type = "uint32"
+	Int64Type    Type = "int64"
+	UInt64Type   Type = "uint64"
+	Float32Type  Type = "float32"
+	Float64Type  Type = "float64"
+	ArrayType    Type = "array"
+	JSONType     Type = "json"
+	DurationType Type = "duration"
 )
 
 func NewChecker(jsonRule []byte, handlerBinds map[string]Handler) (c *Checker, err error) {
@@ -269,6 +270,8 @@ func convType(str string) (t Type, err error) {
 		t = ArrayType
 	case "json":
 		t = JSONType
+	case "duration":
+		t = DurationType
 	default:
 		err = &UnexpectedType{
 			message: fmt.Sprintf("can't parse type `%v`", str),
@@ -281,7 +284,8 @@ func convType(str string) (t Type, err error) {
 func (c *Checker) Check(bs []byte) (err error) {
 	var ok bool
 
-	result, err := ParseJson(bs)
+	var result Result
+	result, err = ParseJson(bs)
 	if err != nil {
 		return
 	}
@@ -321,6 +325,8 @@ func (c *Checker) Check(bs []byte) (err error) {
 			ok = result.IsArray(path)
 		case JSONType:
 			ok = result.IsJSON(path)
+		case DurationType:
+			ok = result.IsDuration(path)
 		default:
 			ok = false
 		}

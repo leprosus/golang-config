@@ -359,6 +359,30 @@ func JSON(path string) (val map[string]interface{}) {
 	return
 }
 
+// Returns duration value by json-path
+func Duration(path string) (val time.Duration) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	var (
+		i64 int64
+		err error
+	)
+	i64, err = result.Int64(path)
+	if err != nil {
+		handleErr(path, err)
+
+		return
+	}
+
+	val = time.Duration(i64) * time.Second
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
 // Returns interface value by json-path
 func Interface(path string) (val interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))

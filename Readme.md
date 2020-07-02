@@ -69,3 +69,4 @@ emails := cfg.Array("emails")
 * cgf.Bool("json.path") - returns bool value by json path
 * cgf.Array("json.path") - returns strings array by json path
 * cgf.JSON("json.path") - returns map[string]interface by json path
+* cgf.Duration("json.path") - returns duration in seconds by json path

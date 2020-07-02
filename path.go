@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type (
@@ -524,4 +525,20 @@ func (r Result) IsJSON(path string) (ok bool) {
 	ok = err == nil
 
 	return
+}
+
+func (r Result) Duration(path string) (dur time.Duration, err error) {
+	var i64 int64
+	i64, err = r.Int64(path)
+	if err != nil {
+		return
+	}
+
+	dur = time.Duration(i64) * time.Second
+
+	return
+}
+
+func (r Result) IsDuration(path string) (ok bool) {
+	return r.IsInt64(path)
 }
