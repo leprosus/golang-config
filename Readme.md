@@ -68,3 +68,4 @@ emails := cfg.Array("emails")
 * cgf.Float64("json.path") - returns float64 value by json path
 * cgf.Bool("json.path") - returns bool value by json path
 * cgf.Array("json.path") - returns strings array by json path
+* cgf.JSON("json.path") - returns map[string]interface by json path

@@ -340,6 +340,25 @@ func Array(path string) (val []string) {
 	return
 }
 
+// Returns json value by json-path
+func JSON(path string) (val map[string]interface{}) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	var err error
+	val, err = result.JSON(path)
+	if err != nil {
+		handleErr(path, err)
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
 // Returns interface value by json-path
 func Interface(path string) (val interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
