@@ -79,13 +79,13 @@ const (
 	DurationType Type = "duration"
 )
 
-func NewChecker(jsonRule []byte, handlerBinds map[string]Handler) (c *Checker, err error) {
+func NewChecker(jsonRules []byte, handlerBinds map[string]Handler) (c *Checker, err error) {
 	c = &Checker{
 		HandlerBinds: handlerBinds,
 	}
 
 	var v interface{}
-	err = json.Unmarshal(jsonRule, &v)
+	err = json.Unmarshal(jsonRules, &v)
 	if err != nil {
 		err = &UnexpectedScheme{
 			message: fmt.Sprintf("can't read the scheme to check some configuration bacause %v", err),
@@ -109,6 +109,8 @@ func (c *Checker) walkJson(v interface{}) (set RuleSet, err error) {
 
 	heap, ok := v.(map[string]interface{})
 	if !ok {
+		err = fmt.Errorf("can't read json rules")
+
 		return
 	}
 
