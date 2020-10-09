@@ -84,23 +84,13 @@ func (r Result) IsExist(path string) (ok bool) {
 }
 
 func (r Result) String(path string) (str string, err error) {
-	var (
-		v  interface{}
-		ok bool
-	)
+	var v interface{}
 	v, err = r.Interface(path)
 	if err != nil {
 		return
 	}
 
-	str, ok = v.(string)
-	if !ok {
-		err = &ValueUnexpectedType{
-			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
-		}
-
-		return
-	}
+	str = fmt.Sprintf("%v", v)
 
 	return
 }
