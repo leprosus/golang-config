@@ -96,9 +96,16 @@ func (r Result) String(path string) (str string, err error) {
 }
 
 func (r Result) IsString(path string) (ok bool) {
-	_, err := r.String(path)
+	var (
+		v   interface{}
+		err error
+	)
+	v, err = r.Interface(path)
+	if err != nil {
+		return
+	}
 
-	ok = err == nil
+	_, ok = v.(string)
 
 	return
 }
