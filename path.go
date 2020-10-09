@@ -448,19 +448,10 @@ func (r Result) IsBool(path string) (ok bool) {
 	return
 }
 
-func (r Result) Array(path string) (array []string, err error) {
-	var (
-		v   interface{}
-		str string
-		ok  bool
-	)
-	v, err = r.Interface(path)
+func (r Result) List(path string) (list []string, err error) {
+	var slices []interface{}
+	slices, err = r.Array(path)
 	if err != nil {
-		return
-	}
-
-	slices, ok := v.([]interface{})
-	if !ok {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
 		}
@@ -468,6 +459,10 @@ func (r Result) Array(path string) (array []string, err error) {
 		return
 	}
 
+	var (
+		str string
+		ok  bool
+	)
 	for _, slice := range slices {
 		str, ok = slice.(string)
 		if !ok {
@@ -478,7 +473,37 @@ func (r Result) Array(path string) (array []string, err error) {
 			return
 		}
 
-		array = append(array, str)
+		list = append(list, str)
+	}
+
+	return
+}
+
+func (r Result) IsList(path string) (ok bool) {
+	_, err := r.List(path)
+
+	ok = err == nil
+
+	return
+}
+
+func (r Result) Array(path string) (array []interface{}, err error) {
+	var (
+		v  interface{}
+		ok bool
+	)
+	v, err = r.Interface(path)
+	if err != nil {
+		return
+	}
+
+	array, ok = v.([]interface{})
+	if !ok {
+		err = &ValueUnexpectedType{
+			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
+		}
+
+		return
 	}
 
 	return

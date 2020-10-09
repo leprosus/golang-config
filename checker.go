@@ -74,6 +74,7 @@ const (
 	UInt64Type   Type = "uint64"
 	Float32Type  Type = "float32"
 	Float64Type  Type = "float64"
+	ListType     Type = "list"
 	ArrayType    Type = "array"
 	JSONType     Type = "json"
 	DurationType Type = "duration"
@@ -268,6 +269,8 @@ func convType(str string) (t Type, err error) {
 		t = Float32Type
 	case "float64":
 		t = Float64Type
+	case "list":
+		t = ListType
 	case "array":
 		t = ArrayType
 	case "json":
@@ -323,6 +326,8 @@ func (c *Checker) Check(bs []byte) (err error) {
 			ok = result.IsFloat32(path)
 		case Float64Type:
 			ok = result.IsFloat64(path)
+		case ListType:
+			ok = result.IsList(path)
 		case ArrayType:
 			ok = result.IsArray(path)
 		case JSONType:

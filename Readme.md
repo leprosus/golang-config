@@ -42,7 +42,7 @@ text := cfg.String("string")
 one := cfg.Int("digit.one")
 two := cfg.Int("digit.two")
 flag := cfg.Bool("flag")
-emails := cfg.Array("emails")
+emails := cfg.List("emails")
 ```
 
 ## List all methods
@@ -67,6 +67,7 @@ emails := cfg.Array("emails")
 * cgf.Float32("json.path") - returns float32 value by json path
 * cgf.Float64("json.path") - returns float64 value by json path
 * cgf.Bool("json.path") - returns bool value by json path
-* cgf.Array("json.path") - returns strings array by json path
+* cgf.List("json.path") - returns strings array by json path
+* cgf.Array("json.path") - returns array of interfaces by json path
 * cgf.JSON("json.path") - returns map[string]interface by json path
 * cgf.Duration("json.path") - returns duration in seconds by json path

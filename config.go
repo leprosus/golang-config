@@ -322,7 +322,25 @@ func Float64(path string) (val float64) {
 }
 
 // Returns array value by json-path
-func Array(path string) (val []string) {
+func List(path string) (val []string) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	var err error
+	val, err = result.List(path)
+	if err != nil {
+		handleErr(path, err)
+
+		return
+	}
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+func Array(path string) (val []interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
 	result := cfgJson.Load().(Result)
