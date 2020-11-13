@@ -188,6 +188,15 @@ func String(path string) (val string) {
 	return
 }
 
+// Returns string value by json-path or default value
+func StringOrDefault(path, defVal string) (val string) {
+	if Exist(path) {
+		return String(path)
+	} else {
+		return defVal
+	}
+}
+
 // Returns bool value by json-path
 func Bool(path string) (val bool) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
@@ -205,6 +214,15 @@ func Bool(path string) (val bool) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns bool value by json-path or default value
+func BoolOrDefault(path string, defVal bool) (val bool) {
+	if Exist(path) {
+		return Bool(path)
+	} else {
+		return defVal
+	}
 }
 
 // Returns int32 value by json-path
@@ -226,6 +244,15 @@ func Int32(path string) (val int32) {
 	return
 }
 
+// Returns int32 value by json-path or default value
+func Int32OrDefault(path string, defVal int32) (val int32) {
+	if Exist(path) {
+		return Int32(path)
+	} else {
+		return defVal
+	}
+}
+
 // Returns uint32 value by json-path
 func UInt32(path string) (val uint32) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
@@ -243,6 +270,15 @@ func UInt32(path string) (val uint32) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns uint32 value by json-path or default value
+func UInt32OrDefault(path string, defVal uint32) (val uint32) {
+	if Exist(path) {
+		return UInt32(path)
+	} else {
+		return defVal
+	}
 }
 
 // Returns int64 value by json-path
@@ -264,6 +300,15 @@ func Int64(path string) (val int64) {
 	return
 }
 
+// Returns int64 value by json-path or default value
+func Int64OrDefault(path string, defVal int64) (val int64) {
+	if Exist(path) {
+		return Int64(path)
+	} else {
+		return defVal
+	}
+}
+
 // Returns uint64 value by json-path
 func UInt64(path string) (val uint64) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
@@ -281,6 +326,15 @@ func UInt64(path string) (val uint64) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns uint64 value by json-path or default value
+func UInt64OrDefault(path string, defVal uint64) (val uint64) {
+	if Exist(path) {
+		return UInt64(path)
+	} else {
+		return defVal
+	}
 }
 
 // Returns float32 value by json-path
@@ -302,6 +356,15 @@ func Float32(path string) (val float32) {
 	return
 }
 
+// Returns float32 value by json-path or default value
+func Float32OrDefault(path string, defVal float32) (val float32) {
+	if Exist(path) {
+		return Float32(path)
+	} else {
+		return defVal
+	}
+}
+
 // Returns float64 value by json-path
 func Float64(path string) (val float64) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
@@ -321,7 +384,16 @@ func Float64(path string) (val float64) {
 	return
 }
 
-// Returns array value by json-path
+// Returns float64 value by json-path or default value
+func Float64OrDefault(path string, defVal float64) (val float64) {
+	if Exist(path) {
+		return Float64(path)
+	} else {
+		return defVal
+	}
+}
+
+// Returns array of strings value by json-path
 func List(path string) (val []string) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
@@ -340,6 +412,16 @@ func List(path string) (val []string) {
 	return
 }
 
+// Returns array of strings value by json-path or default value
+func ListOrDefault(path string, defVal []string) (val []string) {
+	if Exist(path) {
+		return List(path)
+	} else {
+		return defVal
+	}
+}
+
+// Returns array of interfaces value by json-path
 func Array(path string) (val []interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
 
@@ -356,6 +438,15 @@ func Array(path string) (val []interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns array of interfaces value by json-path or default value
+func ArrayOrDefault(path string, defVal []interface{}) (val []interface{}) {
+	if Exist(path) {
+		return Array(path)
+	} else {
+		return defVal
+	}
 }
 
 // Returns json value by json-path
@@ -375,6 +466,15 @@ func JSON(path string) (val map[string]interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns json value by json-path or default value
+func JSONOrDefault(path string, defVal map[string]interface{}) (val map[string]interface{}) {
+	if Exist(path) {
+		return JSON(path)
+	} else {
+		return defVal
+	}
 }
 
 // Returns duration value by json-path
@@ -401,6 +501,15 @@ func Duration(path string) (val time.Duration) {
 	return
 }
 
+// Returns duration value by json-path or default value
+func DurationOrDefault(path string, defVal time.Duration) (val time.Duration) {
+	if Exist(path) {
+		return Duration(path)
+	} else {
+		return defVal
+	}
+}
+
 // Returns interface value by json-path
 func Interface(path string) (val interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
@@ -418,6 +527,15 @@ func Interface(path string) (val interface{}) {
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
 	return
+}
+
+// Returns interface value by json-path or default value
+func InterfaceOrDefault(path string, defVal interface{}) (val interface{}) {
+	if Exist(path) {
+		return Interface(path)
+	} else {
+		return defVal
+	}
 }
 
 func handleErr(path string, err error) {
