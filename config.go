@@ -43,6 +43,11 @@ func init() {
 
 // Init config: set file path to config file and period config refresh
 func Init(filePath string) (err error) {
+	filePath, err = filepath.Abs(filePath)
+	if err != nil {
+		return
+	}
+
 	cfgFilePath.Store(filePath)
 
 	cfgLogger.Load().(logger).info("Configuration is initialized")
@@ -68,23 +73,21 @@ func Init(filePath string) (err error) {
 }
 
 func refreshJson() (err error) {
-	fileName, err := filepath.Abs(cfgFilePath.Load().(string))
-	if err != nil {
-		return
-	}
+	cfgPath := cfgFilePath.Load().(string)
 
-	info, err := os.Stat(fileName)
+	var info os.FileInfo
+	info, err = os.Stat(cfgPath)
 	if err != nil {
-		err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
+		err = fmt.Errorf("can't load config file %s because: %s", cfgPath, err.Error())
 
 		return
 	}
 
 	if atomic.LoadUint32(&cfgIsLoaded) == 0 || atomic.LoadInt64(&cfgTimestamp) != info.ModTime().Unix() {
 		var bs []byte
-		bs, err = ioutil.ReadFile(fileName)
+		bs, err = ioutil.ReadFile(cfgPath)
 		if err != nil {
-			err = fmt.Errorf("can't load config file %s because: %s", fileName, err.Error())
+			err = fmt.Errorf("can't load config file %s because: %s", cfgPath, err.Error())
 
 			return
 		}
@@ -92,7 +95,7 @@ func refreshJson() (err error) {
 		var result Result
 		result, err = ParseJson(bs)
 		if err != nil {
-			err = fmt.Errorf("file %s isn't valid json", fileName)
+			err = fmt.Errorf("file %s isn't valid json", cfgPath)
 
 			return
 		}
@@ -505,6 +508,45 @@ func Duration(path string) (val time.Duration) {
 func DurationOrDefault(path string, defVal time.Duration) (val time.Duration) {
 	if Exist(path) {
 		return Duration(path)
+	} else {
+		return defVal
+	}
+}
+
+// Returns path value by json-path
+func Path(path string) (val string) {
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Try to get value by %s", path))
+
+	result := cfgJson.Load().(Result)
+
+	var err error
+	val, err = result.String(path)
+	if err != nil {
+		handleErr(path, err)
+
+		return
+	}
+
+	if len(val) > 0 && val[0:1] == "/" {
+		return
+	}
+
+	if len(val) > 2 && val[1:3] == ":\\" {
+		return
+	}
+
+	cfgPath := cfgFilePath.Load().(string)
+	cfgPath = filepath.Join(cfgPath, val)
+
+	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
+
+	return
+}
+
+// Returns path value by json-path or default value
+func PathOrDefault(path, defVal string) (val string) {
+	if Exist(path) {
+		return Path(path)
 	} else {
 		return defVal
 	}
