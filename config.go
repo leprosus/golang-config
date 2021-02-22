@@ -48,6 +48,13 @@ func Init(filePath string) (err error) {
 		return
 	}
 
+	_, err = os.Stat(filePath)
+	if err != nil {
+		err = fmt.Errorf("can't load config file %s because: %s", filePath, err.Error())
+
+		return
+	}
+
 	cfgFilePath.Store(filePath)
 
 	cfgLogger.Load().(logger).info("Configuration is initialized")
@@ -536,7 +543,9 @@ func Path(path string) (val string) {
 	}
 
 	cfgPath := cfgFilePath.Load().(string)
-	cfgPath = filepath.Join(cfgPath, val)
+	cfgPath = filepath.Dir(cfgPath)
+
+	val = filepath.Join(cfgPath, val)
 
 	cfgLogger.Load().(logger).debug(fmt.Sprintf("Value by path `%s` is exist and is set `%v`", path, val))
 
