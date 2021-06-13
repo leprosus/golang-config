@@ -89,23 +89,21 @@ func NewChecker(jsonRules []byte, handlerBinds map[string]Handler) (c *Checker, 
 	err = json.Unmarshal(jsonRules, &v)
 	if err != nil {
 		err = &UnexpectedScheme{
-			message: fmt.Sprintf("can't read the scheme to check some configuration bacause %v", err),
+			message: fmt.Sprintf("can't read the scheme to check a configuration bacause %v", err),
 		}
 
 		return
 	}
 
-	ruleList, err := c.walkJson(v)
+	c.RuleSet, err = c.walkRules(v)
 	if err != nil {
 		return
 	}
 
-	c.RuleSet = ruleList
-
 	return
 }
 
-func (c *Checker) walkJson(v interface{}) (set RuleSet, err error) {
+func (c *Checker) walkRules(v interface{}) (set RuleSet, err error) {
 	set = RuleSet{}
 
 	heap, ok := v.(map[string]interface{})
@@ -147,7 +145,7 @@ func (c *Checker) walkJson(v interface{}) (set RuleSet, err error) {
 		delete(subHeap, "handler")
 
 		if len(subHeap) > 0 {
-			subRuleSet, err = c.walkJson(val)
+			subRuleSet, err = c.walkRules(val)
 			if err != nil {
 				return
 			}
@@ -286,14 +284,8 @@ func convType(str string) (t Type, err error) {
 	return
 }
 
-func (c *Checker) Check(bs []byte) (err error) {
+func (c *Checker) Check(result Result) (err error) {
 	var ok bool
-
-	var result Result
-	result, err = ParseJson(bs)
-	if err != nil {
-		return
-	}
 
 	for path, rule := range c.RuleSet {
 		ok = result.IsExist(path)
@@ -329,9 +321,9 @@ func (c *Checker) Check(bs []byte) (err error) {
 		case ListType:
 			ok = result.IsList(path)
 		case ArrayType:
-			ok = result.IsArray(path)
+			ok = result.IsSlice(path)
 		case JSONType:
-			ok = result.IsJSON(path)
+			ok = result.IsMap(path)
 		case DurationType:
 			ok = result.IsDuration(path)
 		default:
