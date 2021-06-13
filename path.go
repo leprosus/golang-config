@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,18 +26,12 @@ func (e *ValueUnexpectedType) Error() string {
 	return e.message
 }
 
-func ParseJson(bs []byte) (result Result, err error) {
-	var v interface{}
-	err = json.Unmarshal(bs, &v)
-	if err != nil {
-		return
-	}
-
-	switch v.(type) {
+func Parse(val interface{}) (result Result, err error) {
+	switch val.(type) {
 	case map[string]interface{}:
-		result = v.(map[string]interface{})
+		result = val.(map[string]interface{})
 	default:
-		err = fmt.Errorf("get not json")
+		err = fmt.Errorf("can't use the structure")
 	}
 
 	return
@@ -114,7 +107,7 @@ func (r Result) Int32(path string) (i32 int32, err error) {
 	var (
 		v   interface{}
 		f64 float64
-		i64 uint64
+		i64 int64
 		str string
 		ok  bool
 	)
@@ -139,7 +132,7 @@ func (r Result) Int32(path string) (i32 int32, err error) {
 		return
 	}
 
-	i64, err = strconv.ParseUint(str, 10, 32)
+	i64, err = strconv.ParseInt(str, 10, 32)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -450,7 +443,7 @@ func (r Result) IsBool(path string) (ok bool) {
 
 func (r Result) List(path string) (list []string, err error) {
 	var slices []interface{}
-	slices, err = r.Array(path)
+	slices, err = r.Slice(path)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -487,7 +480,7 @@ func (r Result) IsList(path string) (ok bool) {
 	return
 }
 
-func (r Result) Array(path string) (array []interface{}, err error) {
+func (r Result) Slice(path string) (array []interface{}, err error) {
 	var (
 		v  interface{}
 		ok bool
@@ -509,15 +502,15 @@ func (r Result) Array(path string) (array []interface{}, err error) {
 	return
 }
 
-func (r Result) IsArray(path string) (ok bool) {
-	_, err := r.Array(path)
+func (r Result) IsSlice(path string) (ok bool) {
+	_, err := r.Slice(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) JSON(path string) (object map[string]interface{}, err error) {
+func (r Result) Map(path string) (object map[string]interface{}, err error) {
 	object = map[string]interface{}{}
 
 	var (
@@ -541,8 +534,8 @@ func (r Result) JSON(path string) (object map[string]interface{}, err error) {
 	return
 }
 
-func (r Result) IsJSON(path string) (ok bool) {
-	_, err := r.JSON(path)
+func (r Result) IsMap(path string) (ok bool) {
+	_, err := r.Map(path)
 
 	ok = err == nil
 
