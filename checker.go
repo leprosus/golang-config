@@ -75,8 +75,8 @@ const (
 	Float32Type  Type = "float32"
 	Float64Type  Type = "float64"
 	ListType     Type = "list"
-	ArrayType    Type = "array"
-	JSONType     Type = "json"
+	SliceType    Type = "slice"
+	MapType      Type = "map"
 	DurationType Type = "duration"
 )
 
@@ -269,10 +269,10 @@ func convType(str string) (t Type, err error) {
 		t = Float64Type
 	case "list":
 		t = ListType
-	case "array":
-		t = ArrayType
-	case "json":
-		t = JSONType
+	case "slice":
+		t = SliceType
+	case "map":
+		t = MapType
 	case "duration":
 		t = DurationType
 	default:
@@ -284,11 +284,11 @@ func convType(str string) (t Type, err error) {
 	return
 }
 
-func (c *Checker) Check(result Result) (err error) {
+func (c *Checker) Check(obj Object) (err error) {
 	var ok bool
 
 	for path, rule := range c.RuleSet {
-		ok = result.IsExist(path)
+		ok = obj.IsExist(path)
 		if !ok {
 			if rule.IsRequired {
 				err = &UnexpectedValue{
@@ -303,29 +303,29 @@ func (c *Checker) Check(result Result) (err error) {
 
 		switch rule.Type {
 		case StringType:
-			ok = result.IsString(path)
+			ok = obj.IsString(path)
 		case BoolType:
-			ok = result.IsBool(path)
+			ok = obj.IsBool(path)
 		case Int32Type:
-			ok = result.IsInt32(path)
+			ok = obj.IsInt32(path)
 		case UInt32Type:
-			ok = result.IsUInt32(path)
+			ok = obj.IsUInt32(path)
 		case Int64Type:
-			ok = result.IsInt64(path)
+			ok = obj.IsInt64(path)
 		case UInt64Type:
-			ok = result.IsUInt64(path)
+			ok = obj.IsUInt64(path)
 		case Float32Type:
-			ok = result.IsFloat32(path)
+			ok = obj.IsFloat32(path)
 		case Float64Type:
-			ok = result.IsFloat64(path)
+			ok = obj.IsFloat64(path)
 		case ListType:
-			ok = result.IsList(path)
-		case ArrayType:
-			ok = result.IsSlice(path)
-		case JSONType:
-			ok = result.IsMap(path)
+			ok = obj.IsList(path)
+		case SliceType:
+			ok = obj.IsSlice(path)
+		case MapType:
+			ok = obj.IsMap(path)
 		case DurationType:
-			ok = result.IsDuration(path)
+			ok = obj.IsDuration(path)
 		default:
 			ok = false
 		}
@@ -340,7 +340,7 @@ func (c *Checker) Check(result Result) (err error) {
 
 		if rule.RegExp != nil {
 			var str string
-			str, err = result.String(path)
+			str, err = obj.String(path)
 			if err != nil {
 				err = &UnexpectedValue{
 					message: fmt.Sprintf("path `%v` has wrong `type`", path),
@@ -361,7 +361,7 @@ func (c *Checker) Check(result Result) (err error) {
 
 		if rule.Handler != nil {
 			var val interface{}
-			val, err = result.Interface(path)
+			val, err = obj.Interface(path)
 			if err != nil {
 				err = &UnexpectedValue{
 					message: fmt.Sprintf("path `%v` has wrong `type`", path),

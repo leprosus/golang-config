@@ -23,13 +23,13 @@ func TestConfig(t *testing.T) {
 		t.Error(err)
 	}
 
-	var res Result
-	res, err = Parse(v)
+	var o Object
+	o, err = Parse(v)
 	if err != nil {
 		t.Error(err)
 	}
 
-	InitAsStruct(res)
+	InitAsStruct(o)
 
 	if String("str") != "text" {
 		t.Error("Can't get value by path `str`")
@@ -161,7 +161,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	var str string
-	str, err = res.String("map.one")
+	str, err = o.String("map.one")
 	if err != nil {
 		t.Error(err)
 	}
@@ -170,7 +170,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	var dur time.Duration
-	dur, err = res.Duration("dur")
+	dur, err = o.Duration("dur")
 	if err != nil {
 		t.Error(err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	Result map[string]interface{}
+	Object map[string]interface{}
 
 	ValueNotExist struct {
 		message string
@@ -26,10 +26,10 @@ func (e *ValueUnexpectedType) Error() string {
 	return e.message
 }
 
-func Parse(val interface{}) (result Result, err error) {
+func Parse(val interface{}) (obj Object, err error) {
 	switch val.(type) {
 	case map[string]interface{}:
-		result = val.(map[string]interface{})
+		obj = val.(map[string]interface{})
 	default:
 		err = fmt.Errorf("can't use the structure")
 	}
@@ -37,11 +37,11 @@ func Parse(val interface{}) (result Result, err error) {
 	return
 }
 
-func (r Result) Interface(path string) (value interface{}, err error) {
+func (o Object) Interface(path string) (value interface{}, err error) {
 	slices := strings.Split(path, ".")
 
 	var (
-		result = r
+		obj = o
 
 		v  interface{}
 		ok bool
@@ -49,7 +49,7 @@ func (r Result) Interface(path string) (value interface{}, err error) {
 		last = len(slices) - 1
 	)
 	for i, slice := range slices {
-		v, ok = result[slice]
+		v, ok = obj[slice]
 		if !ok {
 			err = &ValueNotExist{
 				message: fmt.Sprintf("path `%s` isn't exist", path),
@@ -59,7 +59,7 @@ func (r Result) Interface(path string) (value interface{}, err error) {
 		}
 
 		if i < last {
-			result = v.(map[string]interface{})
+			obj = v.(map[string]interface{})
 		} else {
 			value = v.(interface{})
 		}
@@ -68,17 +68,17 @@ func (r Result) Interface(path string) (value interface{}, err error) {
 	return
 }
 
-func (r Result) IsExist(path string) (ok bool) {
-	_, err := r.Interface(path)
+func (o Object) IsExist(path string) (ok bool) {
+	_, err := o.Interface(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) String(path string) (str string, err error) {
+func (o Object) String(path string) (str string, err error) {
 	var v interface{}
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -88,12 +88,12 @@ func (r Result) String(path string) (str string, err error) {
 	return
 }
 
-func (r Result) IsString(path string) (ok bool) {
+func (o Object) IsString(path string) (ok bool) {
 	var (
 		v   interface{}
 		err error
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (r Result) IsString(path string) (ok bool) {
 	return
 }
 
-func (r Result) Int32(path string) (i32 int32, err error) {
+func (o Object) Int32(path string) (i32 int32, err error) {
 	var (
 		v   interface{}
 		f64 float64
@@ -111,7 +111,7 @@ func (r Result) Int32(path string) (i32 int32, err error) {
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -146,15 +146,15 @@ func (r Result) Int32(path string) (i32 int32, err error) {
 	return
 }
 
-func (r Result) IsInt32(path string) (ok bool) {
-	_, err := r.Int32(path)
+func (o Object) IsInt32(path string) (ok bool) {
+	_, err := o.Int32(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) UInt32(path string) (ui32 uint32, err error) {
+func (o Object) UInt32(path string) (ui32 uint32, err error) {
 	var (
 		v    interface{}
 		f64  float64
@@ -162,7 +162,7 @@ func (r Result) UInt32(path string) (ui32 uint32, err error) {
 		str  string
 		ok   bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -197,22 +197,22 @@ func (r Result) UInt32(path string) (ui32 uint32, err error) {
 	return
 }
 
-func (r Result) IsUInt32(path string) (ok bool) {
-	_, err := r.UInt32(path)
+func (o Object) IsUInt32(path string) (ok bool) {
+	_, err := o.UInt32(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Int64(path string) (i64 int64, err error) {
+func (o Object) Int64(path string) (i64 int64, err error) {
 	var (
 		v   interface{}
 		f64 float64
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -245,22 +245,22 @@ func (r Result) Int64(path string) (i64 int64, err error) {
 	return
 }
 
-func (r Result) IsInt64(path string) (ok bool) {
-	_, err := r.Int64(path)
+func (o Object) IsInt64(path string) (ok bool) {
+	_, err := o.Int64(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) UInt64(path string) (ui64 uint64, err error) {
+func (o Object) UInt64(path string) (ui64 uint64, err error) {
 	var (
 		v   interface{}
 		f64 float64
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -293,22 +293,22 @@ func (r Result) UInt64(path string) (ui64 uint64, err error) {
 	return
 }
 
-func (r Result) IsUInt64(path string) (ok bool) {
-	_, err := r.UInt64(path)
+func (o Object) IsUInt64(path string) (ok bool) {
+	_, err := o.UInt64(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Float32(path string) (f32 float32, err error) {
+func (o Object) Float32(path string) (f32 float32, err error) {
 	var (
 		v   interface{}
 		f64 float64
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -343,21 +343,21 @@ func (r Result) Float32(path string) (f32 float32, err error) {
 	return
 }
 
-func (r Result) IsFloat32(path string) (ok bool) {
-	_, err := r.Float32(path)
+func (o Object) IsFloat32(path string) (ok bool) {
+	_, err := o.Float32(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Float64(path string) (f64 float64, err error) {
+func (o Object) Float64(path string) (f64 float64, err error) {
 	var (
 		v   interface{}
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -388,21 +388,21 @@ func (r Result) Float64(path string) (f64 float64, err error) {
 	return
 }
 
-func (r Result) IsFloat64(path string) (ok bool) {
-	_, err := r.Float64(path)
+func (o Object) IsFloat64(path string) (ok bool) {
+	_, err := o.Float64(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Bool(path string) (flag bool, err error) {
+func (o Object) Bool(path string) (flag bool, err error) {
 	var (
 		v   interface{}
 		str string
 		ok  bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -433,17 +433,17 @@ func (r Result) Bool(path string) (flag bool, err error) {
 	return
 }
 
-func (r Result) IsBool(path string) (ok bool) {
-	_, err := r.Bool(path)
+func (o Object) IsBool(path string) (ok bool) {
+	_, err := o.Bool(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) List(path string) (list []string, err error) {
+func (o Object) List(path string) (list []string, err error) {
 	var slices []interface{}
-	slices, err = r.Slice(path)
+	slices, err = o.Slice(path)
 	if err != nil {
 		err = &ValueUnexpectedType{
 			message: fmt.Sprintf("path `%s` contains unexpected type of value", path),
@@ -472,20 +472,20 @@ func (r Result) List(path string) (list []string, err error) {
 	return
 }
 
-func (r Result) IsList(path string) (ok bool) {
-	_, err := r.List(path)
+func (o Object) IsList(path string) (ok bool) {
+	_, err := o.List(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Slice(path string) (array []interface{}, err error) {
+func (o Object) Slice(path string) (array []interface{}, err error) {
 	var (
 		v  interface{}
 		ok bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -502,22 +502,22 @@ func (r Result) Slice(path string) (array []interface{}, err error) {
 	return
 }
 
-func (r Result) IsSlice(path string) (ok bool) {
-	_, err := r.Slice(path)
+func (o Object) IsSlice(path string) (ok bool) {
+	_, err := o.Slice(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Map(path string) (object map[string]interface{}, err error) {
+func (o Object) Map(path string) (object map[string]interface{}, err error) {
 	object = map[string]interface{}{}
 
 	var (
 		v  interface{}
 		ok bool
 	)
-	v, err = r.Interface(path)
+	v, err = o.Interface(path)
 	if err != nil {
 		return
 	}
@@ -534,17 +534,17 @@ func (r Result) Map(path string) (object map[string]interface{}, err error) {
 	return
 }
 
-func (r Result) IsMap(path string) (ok bool) {
-	_, err := r.Map(path)
+func (o Object) IsMap(path string) (ok bool) {
+	_, err := o.Map(path)
 
 	ok = err == nil
 
 	return
 }
 
-func (r Result) Duration(path string) (dur time.Duration, err error) {
+func (o Object) Duration(path string) (dur time.Duration, err error) {
 	var i64 int64
-	i64, err = r.Int64(path)
+	i64, err = o.Int64(path)
 	if err != nil {
 		return
 	}
@@ -554,6 +554,6 @@ func (r Result) Duration(path string) (dur time.Duration, err error) {
 	return
 }
 
-func (r Result) IsDuration(path string) (ok bool) {
-	return r.IsInt64(path)
+func (o Object) IsDuration(path string) (ok bool) {
+	return o.IsInt64(path)
 }

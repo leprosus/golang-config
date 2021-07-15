@@ -34,8 +34,8 @@ type logFn struct {
 }
 
 func init() {
-	result, _ := Parse(map[string]interface{}{})
-	cfg.Store(result)
+	obj, _ := Parse(map[string]interface{}{})
+	cfg.Store(obj)
 
 	logger.Store(logFn{
 		debug: func(message string) {},
@@ -89,11 +89,11 @@ func Init(cfgPath string) (err error) {
 	return
 }
 
-// InitAsStruct sets interface (Result struct) as configuration
-func InitAsStruct(result Result) {
+// InitAsStruct sets interface (Object struct) as configuration
+func InitAsStruct(obj Object) {
 	atomic.StoreUint32(&withRefresh, 0)
 
-	cfg.Store(result)
+	cfg.Store(obj)
 }
 
 func refreshJson() (err error) {
@@ -120,14 +120,14 @@ func refreshJson() (err error) {
 			return
 		}
 
-		var result Result
-		err = json.Unmarshal(bs, &result)
+		var obj Object
+		err = json.Unmarshal(bs, &obj)
 		if err != nil {
 			err = fmt.Errorf("file %s isn't suported configuration", cfgPath)
 
 			return
 		}
-		cfg.Store(result)
+		cfg.Store(obj)
 
 		atomic.StoreInt64(&timestamp, info.ModTime().Unix())
 
@@ -197,17 +197,17 @@ func Refresh(callback func()) {
 
 // Exist returns flag is value existed by path
 func Exist(path string) bool {
-	return cfg.Load().(Result).IsExist(path)
+	return cfg.Load().(Object).IsExist(path)
 }
 
 // String returns string value by path
 func String(path string) (val string) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.String(path)
+	val, err = obj.String(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -232,10 +232,10 @@ func StringOrDefault(path, defVal string) (val string) {
 func Bool(path string) (val bool) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Bool(path)
+	val, err = obj.Bool(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -260,10 +260,10 @@ func BoolOrDefault(path string, defVal bool) (val bool) {
 func Int32(path string) (val int32) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Int32(path)
+	val, err = obj.Int32(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -288,10 +288,10 @@ func Int32OrDefault(path string, defVal int32) (val int32) {
 func UInt32(path string) (val uint32) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.UInt32(path)
+	val, err = obj.UInt32(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -316,10 +316,10 @@ func UInt32OrDefault(path string, defVal uint32) (val uint32) {
 func Int64(path string) (val int64) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Int64(path)
+	val, err = obj.Int64(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -344,10 +344,10 @@ func Int64OrDefault(path string, defVal int64) (val int64) {
 func UInt64(path string) (val uint64) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.UInt64(path)
+	val, err = obj.UInt64(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -372,10 +372,10 @@ func UInt64OrDefault(path string, defVal uint64) (val uint64) {
 func Float32(path string) (val float32) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Float32(path)
+	val, err = obj.Float32(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -400,10 +400,10 @@ func Float32OrDefault(path string, defVal float32) (val float32) {
 func Float64(path string) (val float64) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Float64(path)
+	val, err = obj.Float64(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -428,10 +428,10 @@ func Float64OrDefault(path string, defVal float64) (val float64) {
 func List(path string) (val []string) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.List(path)
+	val, err = obj.List(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -456,10 +456,10 @@ func ListOrDefault(path string, defVal []string) (val []string) {
 func Slice(path string) (val []interface{}) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Slice(path)
+	val, err = obj.Slice(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -484,10 +484,10 @@ func SliceOrDefault(path string, defVal []interface{}) (val []interface{}) {
 func Map(path string) (val map[string]interface{}) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Map(path)
+	val, err = obj.Map(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -512,13 +512,13 @@ func MapOrDefault(path string, defVal map[string]interface{}) (val map[string]in
 func Duration(path string) (val time.Duration) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var (
 		i64 int64
 		err error
 	)
-	i64, err = result.Int64(path)
+	i64, err = obj.Int64(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -545,10 +545,10 @@ func DurationOrDefault(path string, defVal time.Duration) (val time.Duration) {
 func Path(path string) (val string) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.String(path)
+	val, err = obj.String(path)
 	if err != nil {
 		handleErr(path, err)
 
@@ -586,10 +586,10 @@ func PathOrDefault(path, defVal string) (val string) {
 func Interface(path string) (val interface{}) {
 	logger.Load().(logFn).debug(fmt.Sprintf("Try to get value by %s", path))
 
-	result := cfg.Load().(Result)
+	obj := cfg.Load().(Object)
 
 	var err error
-	val, err = result.Interface(path)
+	val, err = obj.Interface(path)
 	if err != nil {
 		handleErr(path, err)
 
